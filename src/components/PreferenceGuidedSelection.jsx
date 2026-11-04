@@ -200,7 +200,7 @@ function SectionOption({ section, selected, onSelect }) {
   );
 }
 
-function MatchingVenueSections({ preferences }) {
+function MatchingVenueSections({ preferences, onSelectSection }) {
   const [selectedSection, setSelectedSection] = useState("circle-2-a");
   const selected = venueSections.find(
     (section) => section.id === selectedSection,
@@ -255,7 +255,11 @@ function MatchingVenueSections({ preferences }) {
           <Button variant="outlined" fullWidth>
             View on map
           </Button>
-          <Button variant="contained" fullWidth>
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={() => onSelectSection?.(selected)}
+          >
             Select section
           </Button>
         </Stack>
@@ -264,7 +268,7 @@ function MatchingVenueSections({ preferences }) {
   );
 }
 
-export default function PreferenceGuidedSelection() {
+export default function PreferenceGuidedSelection({ onSelectSection }) {
   const [preferences, setPreferences] = useState({
     tickets: 2,
     maxPrice: 150,
@@ -283,7 +287,10 @@ export default function PreferenceGuidedSelection() {
       }}
     >
       <Preferences onApply={setPreferences} />
-      <MatchingVenueSections preferences={preferences} />
+      <MatchingVenueSections
+        preferences={preferences}
+        onSelectSection={onSelectSection}
+      />
     </Box>
   );
 }

@@ -28,12 +28,14 @@ function BookingSection({
   status,
   expanded,
   onChange,
+  disabled = false,
   children,
 }) {
   return (
     <Accordion
       expanded={expanded}
       onChange={onChange(panel)}
+      disabled={disabled}
       disableGutters
       sx={{
         border: "1px solid",
@@ -94,7 +96,7 @@ function BookingSection({
   );
 }
 
-function BookingSummary() {
+function BookingSummary({ selectedSection }) {
   return (
     <Card
       variant="outlined"
@@ -154,7 +156,9 @@ function BookingSummary() {
             <Typography variant="overline" color="text.secondary">
               Section
             </Typography>
-            <Typography color="text.secondary">Not selected</Typography>
+            <Typography color={selectedSection ? "text.primary" : "text.secondary"}>
+              {selectedSection?.name ?? "Not selected"}
+            </Typography>
           </Box>
 
           <Box>
@@ -178,9 +182,15 @@ function BookingSummary() {
 
 export default function App() {
   const [expandedPanel, setExpandedPanel] = useState("seats");
+  const [selectedSection, setSelectedSection] = useState(null);
 
   const changePanel = (panel) => (_, isExpanded) => {
     setExpandedPanel(isExpanded ? panel : false);
+  };
+
+  const handleSelectSection = (section) => {
+    setSelectedSection(section);
+    setExpandedPanel("allocation");
   };
 
   return (
@@ -271,21 +281,32 @@ export default function App() {
               <Button variant="outlined">Load saved draft</Button>
             </Stack>
 
-            <PreferenceGuidedSelection />
+            <PreferenceGuidedSelection
+              onSelectSection={handleSelectSection}
+            />
           </BookingSection>
 
           <BookingSection
             panel="allocation"
             number="3"
             title="Seat allocation"
-            status="Select a section to continue"
+            status={
+              selectedSection
+                ? selectedSection.name
+                : "Select a section to continue"
+            }
             expanded={expandedPanel === "allocation"}
             onChange={changePanel}
+            disabled={!selectedSection}
           >
-            <Typography color="text.secondary">
-              The venue map, expected-view preview, and exact available seats
-              will appear here after a recommended section is selected.
-            </Typography>
+            <Stack spacing={1}>
+              <Typography variant="h6">{selectedSection?.name}</Typography>
+              <Typography color="text.secondary">
+                The venue map, expected-view preview, and exact available seats
+                will appear here. Select the panel header again to collapse
+                this section.
+              </Typography>
+            </Stack>
           </BookingSection>
 
           <BookingSection
@@ -303,7 +324,7 @@ export default function App() {
           </BookingSection>
         </Stack>
 
-        <BookingSummary />
+        <BookingSummary selectedSection={selectedSection} />
       </Box>
     </Box>
   );
