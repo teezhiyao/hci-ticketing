@@ -1,4 +1,8 @@
+import { useState } from "react";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Card,
@@ -17,26 +21,43 @@ const event = {
   time: "7:30 PM",
 };
 
-function BookingSection({ number, title, status, active = false, children }) {
+function BookingSection({
+  panel,
+  number,
+  title,
+  status,
+  expanded,
+  onChange,
+  children,
+}) {
   return (
-    <Card
-      variant="outlined"
+    <Accordion
+      expanded={expanded}
+      onChange={onChange(panel)}
+      disableGutters
       sx={{
-        borderColor: active ? "primary.main" : "divider",
-        borderWidth: active ? 2 : 1,
+        border: "1px solid",
+        borderColor: expanded ? "primary.main" : "divider",
         overflow: "visible",
+        "&:before": { display: "none" },
       }}
     >
-      <Box
+      <AccordionSummary
+        expandIcon={
+          <Typography sx={{ color: "common.white", fontSize: 22 }}>
+            {expanded ? "−" : "+"}
+          </Typography>
+        }
         sx={{
           px: 2.5,
-          py: 1.75,
-          bgcolor: active ? "primary.main" : "#263444",
+          minHeight: 62,
+          bgcolor: expanded ? "primary.main" : "#263444",
           color: "common.white",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 2,
+          "& .MuiAccordionSummary-content": {
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+          },
         }}
       >
         <Stack direction="row" spacing={1.5} alignItems="center">
@@ -48,7 +69,7 @@ function BookingSection({ number, title, status, active = false, children }) {
               display: "grid",
               placeItems: "center",
               bgcolor: "common.white",
-              color: active ? "primary.main" : "#263444",
+              color: expanded ? "primary.main" : "#263444",
               fontWeight: 700,
             }}
           >
@@ -64,10 +85,12 @@ function BookingSection({ number, title, status, active = false, children }) {
             {status}
           </Typography>
         )}
-      </Box>
+      </AccordionSummary>
 
-      {children && <Box sx={{ p: { xs: 2, md: 3 } }}>{children}</Box>}
-    </Card>
+      <AccordionDetails sx={{ p: { xs: 2, md: 3 } }}>
+        {children}
+      </AccordionDetails>
+    </Accordion>
   );
 }
 
@@ -154,6 +177,12 @@ function BookingSummary() {
 }
 
 export default function App() {
+  const [expandedPanel, setExpandedPanel] = useState("seats");
+
+  const changePanel = (panel) => (_, isExpanded) => {
+    setExpandedPanel(isExpanded ? panel : false);
+  };
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#eef1f5" }}>
       <Box
@@ -197,9 +226,12 @@ export default function App() {
       >
         <Stack spacing={2.5}>
           <BookingSection
+            panel="date"
             number="1"
             title="Date and time"
             status="Completed"
+            expanded={expandedPanel === "date"}
+            onChange={changePanel}
           >
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -216,10 +248,12 @@ export default function App() {
           </BookingSection>
 
           <BookingSection
+            panel="seats"
             number="2"
             title="Seats — enter preferences and review matches"
             status="Current step"
-            active
+            expanded={expandedPanel === "seats"}
+            onChange={changePanel}
           >
             <Stack
               direction={{ xs: "column", sm: "row" }}
@@ -241,16 +275,32 @@ export default function App() {
           </BookingSection>
 
           <BookingSection
+            panel="allocation"
             number="3"
             title="Seat allocation"
             status="Select a section to continue"
-          />
+            expanded={expandedPanel === "allocation"}
+            onChange={changePanel}
+          >
+            <Typography color="text.secondary">
+              The venue map, expected-view preview, and exact available seats
+              will appear here after a recommended section is selected.
+            </Typography>
+          </BookingSection>
 
           <BookingSection
+            panel="ticket-type"
             number="4"
             title="Ticket type"
             status="Complete seat allocation first"
-          />
+            expanded={expandedPanel === "ticket-type"}
+            onChange={changePanel}
+          >
+            <Typography color="text.secondary">
+              Applicable standard or promotional ticket types will appear here
+              after exact seats have been selected.
+            </Typography>
+          </BookingSection>
         </Stack>
 
         <BookingSummary />
