@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; }
+  html, body { width: 1654px; height: 1169px; margin: 0; background: white; }
+  body { padding: 20px 25px 39px; color: #000; font-family: "Comic Sans MS", sans-serif; }
+  .page { position: relative; width: 1600px; height: 1110px; border: 2px solid #000; padding: 14px 29px 20px; }
+  h1 { height: 40px; margin: 0 0 15px; font-size: 28px; line-height: 40px; }
+  .layout { display: grid; grid-template-columns: 1100px 410px; gap: 25px; }
+  .left { width: 1100px; }
+  .box { border: 2px solid #000; padding: 18px 20px; font-size: 21px; font-weight: bold; }
+  .date { height: 110px; display: flex; align-items: center; line-height: 1.45; }
+  .active-title { height: 55px; margin-top: 20px; border-width: 3px; display: flex; align-items: center; }
+  .active-content { height: 450px; padding: 18px 25px 10px; display: flex; gap: 42px; align-items: flex-start; }
+  .active-content img:first-child { width: 306px; height: 435px; object-fit: contain; object-position: top; }
+  .active-content img:last-child { width: 541px; height: 435px; object-fit: contain; object-position: top; }
+  .collapsed { height: 90px; margin-top: 20px; display: flex; align-items: center; }
+  .ticket { line-height: 1.45; }
+  .note { height: 35px; margin: 20px 10px 0; font-size: 18px; }
+  .side { height: 855px; border: 2px solid #000; padding: 18px; font-size: 18px; line-height: 1.18; }
+  .side .event { margin-bottom: 10px; }
+  .side .divider { letter-spacing: 1px; margin-bottom: 4px; }
+  .side h2 { margin: 0 0 20px; font-size: 20px; }
+  .side .label { margin-top: 17px; font-weight: bold; }
+  .edit { font-weight: normal; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <h1>PROTOTYPE 2 - PREFERENCE-GUIDED SELECTION</h1>
+    <div class="layout">
+      <main class="left">
+        <section class="box date">1&nbsp;&nbsp;&nbsp; DATE &amp; TIME<br>23 Oct 2026, 7:30 PM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [ EDIT ]</section>
+        <section class="box active-title">2&nbsp;&nbsp;&nbsp; SEATS - ENTER PREFERENCES AND REVIEW SECTION MATCHES</section>
+        <section class="active-content">
+          <img src="../images/prototype-2-preferences-panel.png" alt="Seat preferences">
+          <img src="../images/prototype-2-matches-panel.png" alt="Matching venue sections">
+        </section>
+        <section class="box collapsed">3&nbsp;&nbsp;&nbsp; SEAT ALLOCATION</section>
+        <section class="box collapsed ticket">4&nbsp;&nbsp;&nbsp; TICKET TYPE<br>Standard admission&nbsp;&nbsp;&nbsp;&nbsp; $140 each&nbsp;&nbsp;&nbsp;&nbsp; Quantity 2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [ SELECT ]</section>
+        <div class="note">If there is no exact match, explain which preference could be relaxed.</div>
+      </main>
+      <aside class="side">
+        <div class="event">EVENT IMAGE PLACEHOLDER<br><br><strong>FENG ZE BEND THE LINES</strong><br>Esplanade Concert Hall</div>
+        <div class="divider">-------------------------</div>
+        <h2>5&nbsp;&nbsp;&nbsp; BOOKING SUMMARY</h2>
+        <div class="label">DATE &amp; TIME</div><div>23 Oct 2026 / 7:30 PM&nbsp;&nbsp;&nbsp; <span class="edit">edit</span></div>
+        <div class="label">PREFERENCES</div><div>2 adjacent seats / Up to $150 each<br>Central view / No restricted view</div>
+        <div class="label">SECTION</div><div>Circle 2 / Section A&nbsp;&nbsp;&nbsp; <span class="edit">edit</span></div>
+        <div class="label">SEAT ALLOCATION</div><div>Row 10 / Seats 12-13</div>
+        <div class="label">TICKET QUANTITY</div><div>2</div>
+        <div class="label">TICKET TYPE</div><div>Not selected</div>
+        <div class="label">SUBTOTAL</div><div>$280</div>
+      </aside>
+    </div>
+  </div>
+</body>
+</html>
