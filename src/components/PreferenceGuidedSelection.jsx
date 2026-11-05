@@ -400,15 +400,27 @@ function VenueSectionMap({ selectedSection, onSelect, recommendationMode }) {
   );
 }
 
-function MatchingVenueSections({ preferences, onSelectSection }) {
+function MatchingVenueSections({
+  preferences,
+  onSelectSection,
+  selectionMode,
+}) {
   const [selectedSection, setSelectedSection] = useState("circle-2-a");
-  const [selectionMode, setSelectionMode] = useState("guided");
   const selected = venueSections.find(
     (section) => section.id === selectedSection,
   );
   const recommendedSections = venueSections.filter((section) =>
     recommendedSectionIds.includes(section.id),
   );
+
+  useEffect(() => {
+    if (
+      selectionMode === "guided" &&
+      !recommendedSectionIds.includes(selectedSection)
+    ) {
+      setSelectedSection("circle-2-a");
+    }
+  }, [selectionMode, selectedSection]);
 
   return (
     <Card variant="outlined">
@@ -439,28 +451,6 @@ function MatchingVenueSections({ preferences, onSelectSection }) {
         </Stack>
 
         <Divider sx={{ my: 2 }} />
-        <ToggleButtonGroup
-          value={selectionMode}
-          exclusive
-          size="small"
-          fullWidth
-          onChange={(_, value) => {
-            if (!value) return;
-            setSelectionMode(value);
-            if (
-              value === "guided" &&
-              !recommendedSectionIds.includes(selectedSection)
-            ) {
-              setSelectedSection("circle-2-a");
-            }
-          }}
-          aria-label="Section selection method"
-          sx={{ mb: 2 }}
-        >
-          <ToggleButton value="browse">Browse map</ToggleButton>
-          <ToggleButton value="guided">Guided recommendations</ToggleButton>
-        </ToggleButtonGroup>
-
         <VenueSectionMap
           selectedSection={selectedSection}
           onSelect={setSelectedSection}
@@ -522,6 +512,7 @@ export default function PreferenceGuidedSelection({
   loadedDraft,
   onPreferencesChange,
 }) {
+  const [selectionMode, setSelectionMode] = useState("guided");
   const [preferences, setPreferences] = useState({
     tickets: 2,
     maxPrice: 150,
@@ -535,20 +526,60 @@ export default function PreferenceGuidedSelection({
     onPreferencesChange?.(nextPreferences);
   }
 
+  useEffect(() => {
+    if (loadedDraft) setSelectionMode("guided");
+  }, [loadedDraft]);
+
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", md: "360px minmax(0, 1fr)" },
-        gap: 3,
-        alignItems: "start",
-      }}
-    >
-      <Preferences onApply={applyPreferences} loadedDraft={loadedDraft} />
-      <MatchingVenueSections
-        preferences={preferences}
-        onSelectSection={onSelectSection}
-      />
-    </Box>
+    <Stack spacing={3}>
+      <Card variant="outlined">
+        <CardContent>
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "stretch", md: "center" }}
+            gap={2}
+          >
+            <Box>
+              <Typography variant="h6">Choose a section-selection path</Typography>
+              <Typography variant="body2" color="text.secondary">
+                Browse the venue yourself or use preferences to receive a shortlist.
+              </Typography>
+            </Box>
+            <ToggleButtonGroup
+              value={selectionMode}
+              exclusive
+              size="small"
+              onChange={(_, value) => value && setSelectionMode(value)}
+              aria-label="Section selection path"
+            >
+              <ToggleButton value="browse">Browse map</ToggleButton>
+              <ToggleButton value="guided">Guided recommendations</ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns:
+            selectionMode === "guided"
+              ? { xs: "1fr", md: "360px minmax(0, 1fr)" }
+              : "minmax(0, 1fr)",
+          gap: 3,
+          alignItems: "start",
+        }}
+      >
+        {selectionMode === "guided" && (
+          <Preferences onApply={applyPreferences} loadedDraft={loadedDraft} />
+        )}
+        <MatchingVenueSections
+          preferences={preferences}
+          onSelectSection={onSelectSection}
+          selectionMode={selectionMode}
+        />
+      </Box>
+    </Stack>
   );
 }
