@@ -19,6 +19,7 @@ import {
 } from "@mui/material";
 import PreferenceGuidedSelection from "./components/PreferenceGuidedSelection.jsx";
 import SeatAllocation from "./components/SeatAllocation.jsx";
+import DraftSetupPage from "./components/DraftSetupPage.jsx";
 
 const event = {
   title: "Feng Ze — Bend The Lines",
@@ -27,7 +28,7 @@ const event = {
   time: "7:30 PM",
 };
 
-const savedDraft = {
+const defaultSavedDraft = {
   id: "concert-default",
   name: "Concert default",
   tickets: 2,
@@ -223,6 +224,8 @@ function BookingSummary({
 }
 
 export default function App() {
+  const [page, setPage] = useState("booking");
+  const [savedDraft, setSavedDraft] = useState(defaultSavedDraft);
   const [expandedPanel, setExpandedPanel] = useState("seats");
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -264,6 +267,12 @@ export default function App() {
     setDraftDialogOpen(false);
   };
 
+  const handleSaveDraft = (draft) => {
+    setSavedDraft({ ...draft, savedAt: Date.now() });
+    setPage("booking");
+    setDraftDialogOpen(true);
+  };
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#eef1f5" }}>
       <Box
@@ -285,14 +294,36 @@ export default function App() {
                 {event.title} · {event.venue}
               </Typography>
             </Box>
-            <Chip
-              label="Seats are not reserved until confirmation"
-              sx={{ bgcolor: "rgba(255,255,255,.12)", color: "common.white" }}
-            />
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+              <Button
+                variant="outlined"
+                onClick={() => setPage("draft")}
+                sx={{
+                  color: "common.white",
+                  borderColor: "rgba(255,255,255,.55)",
+                }}
+              >
+                Prepare a draft
+              </Button>
+              <Chip
+                label="Seats are not reserved until confirmation"
+                sx={{ bgcolor: "rgba(255,255,255,.12)", color: "common.white" }}
+              />
+            </Stack>
           </Stack>
         </Box>
       </Box>
 
+      {page === "draft" ? (
+        <Box sx={{ px: { xs: 2, md: 4 }, py: 4 }}>
+          <DraftSetupPage
+            initialDraft={savedDraft}
+            onBack={() => setPage("booking")}
+            onSave={handleSaveDraft}
+          />
+        </Box>
+      ) : (
+        <>
       <Box
         sx={{
           maxWidth: 1440,
@@ -349,6 +380,10 @@ export default function App() {
                   Enter your constraints, then compare the recommended matches.
                 </Typography>
               </Box>
+              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                <Button variant="text" onClick={() => setPage("draft")}>
+                  Create or edit draft
+                </Button>
               <Tooltip
                 arrow
                 placement="bottom"
@@ -362,6 +397,7 @@ export default function App() {
                   Load saved draft&nbsp; ⓘ
                 </Button>
               </Tooltip>
+              </Stack>
             </Stack>
 
             <PreferenceGuidedSelection
@@ -476,6 +512,8 @@ export default function App() {
           </Button>
         </DialogActions>
       </Dialog>
+        </>
+      )}
     </Box>
   );
 }
