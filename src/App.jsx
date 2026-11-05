@@ -10,6 +10,7 @@ import {
   Chip,
   Divider,
   Stack,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import PreferenceGuidedSelection from "./components/PreferenceGuidedSelection.jsx";
@@ -306,7 +307,34 @@ export default function App() {
                   Enter your constraints, then compare the recommended matches.
                 </Typography>
               </Box>
-              <Button variant="outlined">Load saved draft</Button>
+              <Tooltip
+                arrow
+                placement="bottom"
+                title={
+                  <Box sx={{ p: 0.5 }}>
+                    <Typography variant="subtitle2" fontWeight={700}>
+                      Optional pre-sale preparation
+                    </Typography>
+                    <Typography variant="caption" component="p">
+                      A saved draft can store ticket quantity, maximum price,
+                      adjacency requirements, viewing preferences,
+                      restricted-view exclusions, and acceptable fallback
+                      conditions before ticket sales open.
+                    </Typography>
+                    <Typography variant="caption" component="p" sx={{ mt: 1 }}>
+                      Loading a draft fills in the preferences but does not
+                      reserve or purchase seats.
+                    </Typography>
+                  </Box>
+                }
+              >
+                <Button
+                  variant="outlined"
+                  aria-label="Load saved draft. More information is available in the tooltip."
+                >
+                  Load saved draft&nbsp; ⓘ
+                </Button>
+              </Tooltip>
             </Stack>
 
             <PreferenceGuidedSelection
