@@ -419,6 +419,7 @@ function MatchingVenueSections({
   preferences,
   onSelectSection,
   selectionMode,
+  onBrowseMap,
 }) {
   const [selectedSection, setSelectedSection] = useState("circle-2-a");
   const selected = venueSections.find(
@@ -427,6 +428,8 @@ function MatchingVenueSections({
   const recommendedSections = venueSections.filter((section) =>
     recommendedSectionIds.includes(section.id),
   );
+  const noExactMatch =
+    selectionMode === "guided" && preferences.maxPrice < 90;
 
   useEffect(() => {
     if (
@@ -449,7 +452,9 @@ function MatchingVenueSections({
           <Box>
             <Typography variant="h6">
               {selectionMode === "guided"
-                ? "Matching venue sections"
+                ? noExactMatch
+                  ? "Closest available alternatives"
+                  : "Matching venue sections"
                 : "Browse venue sections"}
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -466,6 +471,21 @@ function MatchingVenueSections({
         </Stack>
 
         <Divider sx={{ my: 2 }} />
+        {noExactMatch && (
+          <Alert
+            severity="warning"
+            sx={{ mb: 2 }}
+            action={
+              <Button color="inherit" size="small" onClick={onBrowseMap}>
+                Browse full map
+              </Button>
+            }
+          >
+            No section can satisfy the ${preferences.maxPrice} maximum price
+            together with the current requirements. Increase the budget to at
+            least $90, or inspect all sections on the venue map.
+          </Alert>
+        )}
         <VenueSectionMap
           selectedSection={selectedSection}
           onSelect={setSelectedSection}
@@ -593,6 +613,7 @@ export default function PreferenceGuidedSelection({
           preferences={preferences}
           onSelectSection={onSelectSection}
           selectionMode={selectionMode}
+          onBrowseMap={() => setSelectionMode("browse")}
         />
       </Box>
     </Stack>
