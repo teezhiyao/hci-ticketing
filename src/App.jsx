@@ -8,6 +8,10 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Stack,
   Tooltip,
@@ -21,6 +25,17 @@ const event = {
   venue: "Esplanade Concert Hall",
   date: "23 October 2026",
   time: "7:30 PM",
+};
+
+const savedDraft = {
+  id: "concert-default",
+  name: "Concert default",
+  tickets: 2,
+  maxPrice: 200,
+  sitTogether: true,
+  view: "center",
+  excludeRestricted: true,
+  fallback: "Side view allowed; do not exceed $200",
 };
 
 function BookingSection({
@@ -98,7 +113,12 @@ function BookingSection({
   );
 }
 
-function BookingSummary({ selectedSection, selectedSeats, seatsHeld }) {
+function BookingSummary({
+  selectedSection,
+  selectedSeats,
+  seatsHeld,
+  preferences,
+}) {
   return (
     <Card
       variant="outlined"
@@ -153,9 +173,17 @@ function BookingSummary({ selectedSection, selectedSeats, seatsHeld }) {
             <Typography variant="overline" color="text.secondary">
               Preferences
             </Typography>
-            <Typography>2 adjacent seats</Typography>
-            <Typography>Up to $150 each</Typography>
-            <Typography>Central view · No restricted view</Typography>
+            <Typography>
+              {preferences.tickets} {preferences.sitTogether ? "adjacent " : ""}
+              seats
+            </Typography>
+            <Typography>Up to ${preferences.maxPrice} each</Typography>
+            <Typography sx={{ textTransform: "capitalize" }}>
+              {preferences.view} view ·{" "}
+              {preferences.excludeRestricted
+                ? "No restricted view"
+                : "Restricted views allowed"}
+            </Typography>
           </Box>
 
           <Box>
@@ -199,6 +227,15 @@ export default function App() {
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [seatsHeld, setSeatsHeld] = useState(false);
+  const [draftDialogOpen, setDraftDialogOpen] = useState(false);
+  const [loadedDraft, setLoadedDraft] = useState(null);
+  const [preferences, setPreferences] = useState({
+    tickets: 2,
+    maxPrice: 150,
+    sitTogether: true,
+    view: "center",
+    excludeRestricted: true,
+  });
 
   const changePanel = (panel) => (_, isExpanded) => {
     setExpandedPanel(isExpanded ? panel : false);
@@ -220,6 +257,11 @@ export default function App() {
     setSelectedSeats(seats);
     setSeatsHeld(true);
     setExpandedPanel("ticket-type");
+  };
+
+  const handleLoadDraft = () => {
+    setLoadedDraft({ ...savedDraft, loadedAt: Date.now() });
+    setDraftDialogOpen(false);
   };
 
   return (
@@ -310,27 +352,12 @@ export default function App() {
               <Tooltip
                 arrow
                 placement="bottom"
-                title={
-                  <Box sx={{ p: 0.5 }}>
-                    <Typography variant="subtitle2" fontWeight={700}>
-                      Optional pre-sale preparation
-                    </Typography>
-                    <Typography variant="caption" component="p">
-                      A saved draft can store ticket quantity, maximum price,
-                      adjacency requirements, viewing preferences,
-                      restricted-view exclusions, and acceptable fallback
-                      conditions before ticket sales open.
-                    </Typography>
-                    <Typography variant="caption" component="p" sx={{ mt: 1 }}>
-                      Loading a draft fills in the preferences but does not
-                      reserve or purchase seats.
-                    </Typography>
-                  </Box>
-                }
+                title="Preview and load preferences saved before ticket sales open."
               >
                 <Button
                   variant="outlined"
                   aria-label="Load saved draft. More information is available in the tooltip."
+                  onClick={() => setDraftDialogOpen(true)}
                 >
                   Load saved draft&nbsp; ⓘ
                 </Button>
@@ -339,6 +366,8 @@ export default function App() {
 
             <PreferenceGuidedSelection
               onSelectSection={handleSelectSection}
+              loadedDraft={loadedDraft}
+              onPreferencesChange={setPreferences}
             />
           </BookingSection>
 
@@ -385,8 +414,68 @@ export default function App() {
           selectedSection={selectedSection}
           selectedSeats={selectedSeats}
           seatsHeld={seatsHeld}
+          preferences={preferences}
         />
       </Box>
+
+      <Dialog
+        open={draftDialogOpen}
+        onClose={() => setDraftDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Load saved seat preferences</DialogTitle>
+        <DialogContent>
+          <Typography color="text.secondary" sx={{ mb: 2 }}>
+            Review the pre-configuration before applying it. Loading these
+            settings does not reserve or purchase seats.
+          </Typography>
+
+          <Card variant="outlined">
+            <CardContent>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                gap={2}
+              >
+                <Typography variant="h6">{savedDraft.name}</Typography>
+                <Chip label="Saved before sale" size="small" />
+              </Stack>
+              <Divider sx={{ my: 2 }} />
+              <Stack spacing={1.25}>
+                <Typography>
+                  <strong>Tickets:</strong> {savedDraft.tickets}
+                </Typography>
+                <Typography>
+                  <strong>Maximum price:</strong> ${savedDraft.maxPrice} per
+                  ticket
+                </Typography>
+                <Typography>
+                  <strong>Keep seats together:</strong>{" "}
+                  {savedDraft.sitTogether ? "Required" : "Flexible"}
+                </Typography>
+                <Typography sx={{ textTransform: "capitalize" }}>
+                  <strong>Preferred view:</strong> {savedDraft.view}
+                </Typography>
+                <Typography>
+                  <strong>Restricted views:</strong>{" "}
+                  {savedDraft.excludeRestricted ? "Exclude" : "Allow"}
+                </Typography>
+                <Typography>
+                  <strong>Fallback:</strong> {savedDraft.fallback}
+                </Typography>
+              </Stack>
+            </CardContent>
+          </Card>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDraftDialogOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={handleLoadDraft}>
+            Load these settings
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Alert,
   Box,
@@ -52,12 +52,22 @@ const venueSections = [
   },
 ];
 
-function Preferences({ onApply }) {
+function Preferences({ onApply, loadedDraft }) {
   const [tickets, setTickets] = useState(2);
   const [maxPrice, setMaxPrice] = useState(150);
   const [sitTogether, setSitTogether] = useState(true);
   const [view, setView] = useState("center");
   const [excludeRestricted, setExcludeRestricted] = useState(true);
+
+  useEffect(() => {
+    if (!loadedDraft) return;
+    setTickets(loadedDraft.tickets);
+    setMaxPrice(loadedDraft.maxPrice);
+    setSitTogether(loadedDraft.sitTogether);
+    setView(loadedDraft.view);
+    setExcludeRestricted(loadedDraft.excludeRestricted);
+    onApply(loadedDraft);
+  }, [loadedDraft]);
 
   function applyPreferences() {
     onApply({ tickets, maxPrice, sitTogether, view, excludeRestricted });
@@ -268,7 +278,11 @@ function MatchingVenueSections({ preferences, onSelectSection }) {
   );
 }
 
-export default function PreferenceGuidedSelection({ onSelectSection }) {
+export default function PreferenceGuidedSelection({
+  onSelectSection,
+  loadedDraft,
+  onPreferencesChange,
+}) {
   const [preferences, setPreferences] = useState({
     tickets: 2,
     maxPrice: 150,
@@ -276,6 +290,11 @@ export default function PreferenceGuidedSelection({ onSelectSection }) {
     view: "center",
     excludeRestricted: true,
   });
+
+  function applyPreferences(nextPreferences) {
+    setPreferences(nextPreferences);
+    onPreferencesChange?.(nextPreferences);
+  }
 
   return (
     <Box
@@ -286,7 +305,7 @@ export default function PreferenceGuidedSelection({ onSelectSection }) {
         alignItems: "start",
       }}
     >
-      <Preferences onApply={setPreferences} />
+      <Preferences onApply={applyPreferences} loadedDraft={loadedDraft} />
       <MatchingVenueSections
         preferences={preferences}
         onSelectSection={onSelectSection}
