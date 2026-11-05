@@ -210,6 +210,123 @@ function SectionOption({ section, selected, onSelect }) {
   );
 }
 
+function VenueSectionMap({ selectedSection, onSelect }) {
+  const mapSections = [
+    {
+      id: "stalls-c",
+      shortName: "Stalls C",
+      gridColumn: "1 / 2",
+      background: "#fff4e5",
+    },
+    {
+      id: "circle-2-a",
+      shortName: "Circle 2 / A",
+      gridColumn: "2 / 4",
+      background: "#e3f2fd",
+    },
+    {
+      id: "circle-3-b",
+      shortName: "Circle 3 / B",
+      gridColumn: "1 / 4",
+      background: "#eef1f5",
+    },
+  ];
+
+  return (
+    <Box>
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
+        gap={2}
+        sx={{ mb: 1.5 }}
+      >
+        <Box>
+          <Typography fontWeight={700}>Venue section map</Typography>
+          <Typography variant="body2" color="text.secondary">
+            Select a section on the map or compare it in the list below.
+          </Typography>
+        </Box>
+        <Chip label="Stage at top" size="small" variant="outlined" />
+      </Stack>
+
+      <Box
+        sx={{
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 2,
+          bgcolor: "#fafafa",
+          p: 2,
+        }}
+      >
+        <Box
+          sx={{
+            width: "62%",
+            mx: "auto",
+            mb: 2,
+            py: 1,
+            borderRadius: "50% 50% 8px 8px",
+            bgcolor: "#263444",
+            color: "common.white",
+            textAlign: "center",
+            fontWeight: 700,
+            letterSpacing: 1,
+          }}
+        >
+          STAGE
+        </Box>
+
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 1.25,
+            maxWidth: 560,
+            mx: "auto",
+          }}
+        >
+          {mapSections.map((section) => {
+            const selected = selectedSection === section.id;
+            return (
+              <Button
+                key={section.id}
+                variant="outlined"
+                onClick={() => onSelect(section.id)}
+                aria-pressed={selected}
+                sx={{
+                  gridColumn: section.gridColumn,
+                  minHeight: section.id === "circle-3-b" ? 62 : 82,
+                  bgcolor: selected ? "primary.main" : section.background,
+                  color: selected ? "common.white" : "text.primary",
+                  borderColor: selected ? "primary.main" : "grey.400",
+                  fontWeight: 700,
+                  "&:hover": {
+                    bgcolor: selected ? "primary.dark" : "action.hover",
+                    borderColor: "primary.main",
+                  },
+                }}
+              >
+                {section.shortName}
+              </Button>
+            );
+          })}
+        </Box>
+
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="center"
+          spacing={{ xs: 0.5, sm: 2 }}
+          sx={{ mt: 1.5 }}
+        >
+          <Typography variant="caption">Blue: best match</Typography>
+          <Typography variant="caption">Grey: lower price</Typography>
+          <Typography variant="caption">Orange: closest / over budget</Typography>
+        </Stack>
+      </Box>
+    </Box>
+  );
+}
+
 function MatchingVenueSections({ preferences, onSelectSection }) {
   const [selectedSection, setSelectedSection] = useState("circle-2-a");
   const selected = venueSections.find(
@@ -239,6 +356,12 @@ function MatchingVenueSections({ preferences, onSelectSection }) {
         </Stack>
 
         <Divider sx={{ my: 2 }} />
+        <VenueSectionMap
+          selectedSection={selectedSection}
+          onSelect={setSelectedSection}
+        />
+
+        <Divider sx={{ my: 2 }} />
         <Stack spacing={2}>
           {venueSections.map((section) => (
             <SectionOption
@@ -257,14 +380,7 @@ function MatchingVenueSections({ preferences, onSelectSection }) {
           </Alert>
         )}
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          sx={{ mt: 3 }}
-        >
-          <Button variant="outlined" fullWidth>
-            View on map
-          </Button>
+        <Stack sx={{ mt: 3 }}>
           <Button
             variant="contained"
             fullWidth
