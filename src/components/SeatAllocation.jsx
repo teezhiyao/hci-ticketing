@@ -56,6 +56,16 @@ const rows = [
 
 const seatPrice = 140;
 
+const viewControlStyles = {
+  display: "grid",
+  placeItems: "center",
+  borderRadius: 1,
+  bgcolor: "rgba(0,0,0,.72)",
+  color: "common.white",
+  fontSize: 16,
+  fontWeight: 700,
+};
+
 function seatKey(seat) {
   return `${seat.row}-${seat.number}`;
 }
@@ -277,21 +287,89 @@ export default function SeatAllocation({
         </Card>
 
         <Card variant="outlined">
-          <Box
-            component="img"
-            src={expectedViewImage}
-            alt="Illustrative expected view from the selected section"
-            sx={{ width: "100%", height: 260, objectFit: "cover" }}
-          />
+          <Box sx={{ position: "relative", bgcolor: "grey.900" }}>
+            <Box
+              component="img"
+              src={expectedViewImage}
+              alt="Illustrative expected view from the selected section"
+              sx={{
+                width: "100%",
+                height: 260,
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ position: "absolute", top: 12, left: 12 }}
+            >
+              <Chip
+                label="360° view concept"
+                size="small"
+                sx={{ bgcolor: "rgba(255,255,255,.92)" }}
+              />
+              <Chip
+                label="Static prototype"
+                size="small"
+                color="warning"
+              />
+            </Stack>
+
+            <Box
+              sx={{
+                position: "absolute",
+                left: "50%",
+                bottom: 14,
+                transform: "translateX(-50%)",
+                px: 1.5,
+                py: 0.75,
+                borderRadius: 5,
+                bgcolor: "rgba(0,0,0,.72)",
+                color: "common.white",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Typography variant="caption">
+                Drag to look around · Scroll to zoom
+              </Typography>
+            </Box>
+
+            <Box
+              aria-hidden="true"
+              sx={{
+                position: "absolute",
+                right: 12,
+                bottom: 12,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 28px)",
+                gridTemplateRows: "repeat(2, 28px)",
+                gap: 0.5,
+              }}
+            >
+              <Box />
+              <Box sx={viewControlStyles}>↑</Box>
+              <Box />
+              <Box sx={viewControlStyles}>←</Box>
+              <Box sx={viewControlStyles}>↓</Box>
+              <Box sx={viewControlStyles}>→</Box>
+            </Box>
+          </Box>
           <CardContent>
             <Typography variant="overline" color="text.secondary">
-              Approximate expected view
+              Interactive expected-view preview
             </Typography>
             <Typography variant="h6">Central view from Circle 2</Typography>
             <Typography variant="body2" color="text.secondary">
               Illustrative section-level preview. The exact view may vary by
               row and seat.
             </Typography>
+            <Alert severity="info" sx={{ mt: 2 }}>
+              This medium-fidelity prototype uses a static image. In the full
+              product, users could pan, rotate, and zoom to inspect other
+              viewing directions.
+            </Alert>
           </CardContent>
         </Card>
       </Box>
