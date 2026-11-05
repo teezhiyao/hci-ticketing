@@ -6,6 +6,10 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   Stack,
   TextField,
@@ -34,6 +38,7 @@ export default function BookingReview({
 }) {
   const [confirmed, setConfirmed] = useState(false);
   const [copyStatus, setCopyStatus] = useState("idle");
+  const [logDialogOpen, setLogDialogOpen] = useState(false);
 
   const reservationKey = useMemo(
     () => selectedSeats.map((seat) => `${seat.row}${seat.number}`).join("-"),
@@ -44,6 +49,7 @@ export default function BookingReview({
     if (!active) return;
     setConfirmed(false);
     setCopyStatus("idle");
+    setLogDialogOpen(false);
   }, [active, reservationKey]);
 
   const evaluationLogText = confirmed
@@ -53,6 +59,7 @@ export default function BookingReview({
   const handleConfirm = () => {
     onConfirm?.();
     setConfirmed(true);
+    setLogDialogOpen(true);
   };
 
   const handleCopyLog = async () => {
@@ -97,49 +104,10 @@ export default function BookingReview({
       )}
 
       {confirmed && (
-        <Stack spacing={2}>
-          <Alert severity="success">
-            Seat selection confirmed for this prototype. No payment or real
-            purchase has been made.
-          </Alert>
-          <Card variant="outlined">
-            <CardContent>
-              <Typography variant="h6">Anonymous evaluation log</Typography>
-              <Typography color="text.secondary" sx={{ mb: 2 }}>
-                This log contains only actions performed in this prototype and
-                elapsed task time. Copy it and paste it into the evaluation
-                survey. Nothing is submitted automatically.
-              </Typography>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1.5}
-                alignItems={{ xs: "stretch", sm: "center" }}
-              >
-                <Button variant="contained" onClick={handleCopyLog}>
-                  Copy evaluation log
-                </Button>
-                {copyStatus === "copied" && (
-                  <Chip label="Copied to clipboard" color="success" />
-                )}
-              </Stack>
-              {copyStatus === "manual" && (
-                <Box sx={{ mt: 2 }}>
-                  <Alert severity="info" sx={{ mb: 1 }}>
-                    Clipboard access was unavailable. Select and copy the log
-                    below manually.
-                  </Alert>
-                  <TextField
-                    value={evaluationLogText}
-                    multiline
-                    minRows={6}
-                    fullWidth
-                    slotProps={{ htmlInput: { readOnly: true } }}
-                  />
-                </Box>
-              )}
-            </CardContent>
-          </Card>
-        </Stack>
+        <Alert severity="success">
+          Seat selection confirmed for this prototype. No payment or real
+          purchase has been made.
+        </Alert>
       )}
 
       <Box
@@ -266,6 +234,57 @@ export default function BookingReview({
           {confirmed ? "Selection confirmed" : "Confirm selection"}
         </Button>
       </Stack>
+
+      <Dialog
+        open={logDialogOpen}
+        onClose={() => setLogDialogOpen(false)}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Selection confirmed</DialogTitle>
+        <DialogContent>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            The prototype task is complete. No payment or real purchase has
+            been made.
+          </Alert>
+          <Typography variant="h6">Anonymous evaluation log</Typography>
+          <Typography color="text.secondary" sx={{ mt: 0.5, mb: 2 }}>
+            This log contains only actions performed in this prototype and
+            elapsed task time. Copy it and paste it into the evaluation survey.
+            Nothing is submitted automatically.
+          </Typography>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={1.5}
+            alignItems={{ xs: "stretch", sm: "center" }}
+          >
+            <Button variant="contained" onClick={handleCopyLog}>
+              Copy evaluation log
+            </Button>
+            {copyStatus === "copied" && (
+              <Chip label="Copied to clipboard" color="success" />
+            )}
+          </Stack>
+          {copyStatus === "manual" && (
+            <Box sx={{ mt: 2 }}>
+              <Alert severity="info" sx={{ mb: 1 }}>
+                Clipboard access was unavailable. Select and copy the log below
+                manually.
+              </Alert>
+              <TextField
+                value={evaluationLogText}
+                multiline
+                minRows={6}
+                fullWidth
+                slotProps={{ htmlInput: { readOnly: true } }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLogDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }
