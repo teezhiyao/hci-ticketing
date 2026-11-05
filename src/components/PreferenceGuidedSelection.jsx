@@ -39,6 +39,8 @@ const venueSections = [
     explanation: "Matches your budget and preferred view.",
     status: "Recommended",
     warning: false,
+    adjacentAvailability: "4 adjacent pairs available",
+    availabilityColor: "success",
   },
   {
     id: "circle-3-b",
@@ -49,6 +51,8 @@ const venueSections = [
     explanation: "Costs less, but is further from the stage.",
     status: "Lowest price",
     warning: false,
+    adjacentAvailability: "8 adjacent pairs available",
+    availabilityColor: "success",
   },
   {
     id: "stalls-c",
@@ -59,6 +63,8 @@ const venueSections = [
     explanation: "Closer to the stage, but may exceed your budget.",
     status: "Over budget",
     warning: true,
+    adjacentAvailability: "Only 1 adjacent pair remaining",
+    availabilityColor: "warning",
   },
   {
     id: "stalls-right",
@@ -244,6 +250,15 @@ function SectionOption({ section, selected, onSelect }) {
               <Typography variant="body2">
                 {section.direction} — {section.explanation}
               </Typography>
+              {section.adjacentAvailability && (
+                <Chip
+                  label={section.adjacentAvailability}
+                  size="small"
+                  color={section.availabilityColor}
+                  variant="outlined"
+                  sx={{ mt: 1.25 }}
+                />
+              )}
             </Box>
           </Stack>
         </CardContent>
