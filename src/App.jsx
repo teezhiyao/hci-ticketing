@@ -380,10 +380,6 @@ export default function App() {
                   Enter your constraints, then compare the recommended matches.
                 </Typography>
               </Box>
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                <Button variant="text" onClick={() => setPage("draft")}>
-                  Create or edit draft
-                </Button>
               <Tooltip
                 arrow
                 placement="bottom"
@@ -397,7 +393,6 @@ export default function App() {
                   Load saved draft&nbsp; ⓘ
                 </Button>
               </Tooltip>
-              </Stack>
             </Stack>
 
             <PreferenceGuidedSelection
