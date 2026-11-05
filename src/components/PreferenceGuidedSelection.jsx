@@ -21,6 +21,16 @@ import {
 
 const venueSections = [
   {
+    id: "stalls-left",
+    label: "Available",
+    name: "Stalls / Left",
+    price: "$130-$160",
+    direction: "Left-side viewing direction",
+    explanation: "Browse directly on the venue map.",
+    status: "Available",
+    warning: false,
+  },
+  {
     id: "circle-2-a",
     label: "Best match",
     name: "Circle 2 / Section A",
@@ -50,7 +60,39 @@ const venueSections = [
     status: "Over budget",
     warning: true,
   },
+  {
+    id: "stalls-right",
+    label: "Available",
+    name: "Stalls / Right",
+    price: "$130-$160",
+    direction: "Right-side viewing direction",
+    explanation: "Browse directly on the venue map.",
+    status: "Available",
+    warning: false,
+  },
+  {
+    id: "circle-2-left",
+    label: "Available",
+    name: "Circle 2 / Left",
+    price: "$110-$140",
+    direction: "Left-side viewing direction",
+    explanation: "Browse directly on the venue map.",
+    status: "Available",
+    warning: false,
+  },
+  {
+    id: "circle-2-right",
+    label: "Available",
+    name: "Circle 2 / Right",
+    price: "$110-$140",
+    direction: "Right-side viewing direction",
+    explanation: "Browse directly on the venue map.",
+    status: "Available",
+    warning: false,
+  },
 ];
+
+const recommendedSectionIds = ["circle-2-a", "circle-3-b", "stalls-c"];
 
 function Preferences({ onApply, loadedDraft }) {
   const [tickets, setTickets] = useState(2);
@@ -210,19 +252,43 @@ function SectionOption({ section, selected, onSelect }) {
   );
 }
 
-function VenueSectionMap({ selectedSection, onSelect }) {
+function VenueSectionMap({ selectedSection, onSelect, recommendationMode }) {
   const mapSections = [
+    {
+      id: "stalls-left",
+      shortName: "Stalls Left",
+      gridColumn: "1 / 2",
+      background: "#f5f5f5",
+    },
     {
       id: "stalls-c",
       shortName: "Stalls C",
-      gridColumn: "1 / 2",
+      gridColumn: "2 / 3",
       background: "#fff4e5",
+    },
+    {
+      id: "stalls-right",
+      shortName: "Stalls Right",
+      gridColumn: "3 / 4",
+      background: "#f5f5f5",
+    },
+    {
+      id: "circle-2-left",
+      shortName: "Circle 2 / Left",
+      gridColumn: "1 / 2",
+      background: "#f5f5f5",
     },
     {
       id: "circle-2-a",
       shortName: "Circle 2 / A",
-      gridColumn: "2 / 4",
+      gridColumn: "2 / 3",
       background: "#e3f2fd",
+    },
+    {
+      id: "circle-2-right",
+      shortName: "Circle 2 / Right",
+      gridColumn: "3 / 4",
+      background: "#f5f5f5",
     },
     {
       id: "circle-3-b",
@@ -287,6 +353,7 @@ function VenueSectionMap({ selectedSection, onSelect }) {
         >
           {mapSections.map((section) => {
             const selected = selectedSection === section.id;
+            const recommended = recommendedSectionIds.includes(section.id);
             return (
               <Button
                 key={section.id}
@@ -296,7 +363,11 @@ function VenueSectionMap({ selectedSection, onSelect }) {
                 sx={{
                   gridColumn: section.gridColumn,
                   minHeight: section.id === "circle-3-b" ? 62 : 82,
-                  bgcolor: selected ? "primary.main" : section.background,
+                  bgcolor: selected
+                    ? "primary.main"
+                    : recommendationMode && recommended
+                      ? section.background
+                      : "#f5f5f5",
                   color: selected ? "common.white" : "text.primary",
                   borderColor: selected ? "primary.main" : "grey.400",
                   fontWeight: 700,
@@ -312,16 +383,18 @@ function VenueSectionMap({ selectedSection, onSelect }) {
           })}
         </Box>
 
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="center"
-          spacing={{ xs: 0.5, sm: 2 }}
-          sx={{ mt: 1.5 }}
-        >
-          <Typography variant="caption">Blue: best match</Typography>
-          <Typography variant="caption">Grey: lower price</Typography>
-          <Typography variant="caption">Orange: closest / over budget</Typography>
-        </Stack>
+        {recommendationMode && (
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="center"
+            spacing={{ xs: 0.5, sm: 2 }}
+            sx={{ mt: 1.5 }}
+          >
+            <Typography variant="caption">Blue: best match</Typography>
+            <Typography variant="caption">Grey: lower price</Typography>
+            <Typography variant="caption">Orange: closest / over budget</Typography>
+          </Stack>
+        )}
       </Box>
     </Box>
   );
@@ -329,8 +402,12 @@ function VenueSectionMap({ selectedSection, onSelect }) {
 
 function MatchingVenueSections({ preferences, onSelectSection }) {
   const [selectedSection, setSelectedSection] = useState("circle-2-a");
+  const [selectionMode, setSelectionMode] = useState("guided");
   const selected = venueSections.find(
     (section) => section.id === selectedSection,
+  );
+  const recommendedSections = venueSections.filter((section) =>
+    recommendedSectionIds.includes(section.id),
   );
 
   return (
@@ -343,9 +420,15 @@ function MatchingVenueSections({ preferences, onSelectSection }) {
           spacing={2}
         >
           <Box>
-            <Typography variant="h6">Matching venue sections</Typography>
+            <Typography variant="h6">
+              {selectionMode === "guided"
+                ? "Matching venue sections"
+                : "Browse venue sections"}
+            </Typography>
             <Typography variant="body2" color="text.secondary">
-              Ranked using your price and viewing preferences.
+              {selectionMode === "guided"
+                ? "Ranked using your price and viewing preferences."
+                : "Choose a section directly without using a recommendation."}
             </Typography>
           </Box>
           <Chip
@@ -356,22 +439,62 @@ function MatchingVenueSections({ preferences, onSelectSection }) {
         </Stack>
 
         <Divider sx={{ my: 2 }} />
+        <ToggleButtonGroup
+          value={selectionMode}
+          exclusive
+          size="small"
+          fullWidth
+          onChange={(_, value) => {
+            if (!value) return;
+            setSelectionMode(value);
+            if (
+              value === "guided" &&
+              !recommendedSectionIds.includes(selectedSection)
+            ) {
+              setSelectedSection("circle-2-a");
+            }
+          }}
+          aria-label="Section selection method"
+          sx={{ mb: 2 }}
+        >
+          <ToggleButton value="browse">Browse map</ToggleButton>
+          <ToggleButton value="guided">Guided recommendations</ToggleButton>
+        </ToggleButtonGroup>
+
         <VenueSectionMap
           selectedSection={selectedSection}
           onSelect={setSelectedSection}
+          recommendationMode={selectionMode === "guided"}
         />
 
-        <Divider sx={{ my: 2 }} />
-        <Stack spacing={2}>
-          {venueSections.map((section) => (
-            <SectionOption
-              key={section.id}
-              section={section}
-              selected={selectedSection === section.id}
-              onSelect={setSelectedSection}
-            />
-          ))}
-        </Stack>
+        {selectionMode === "guided" ? (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <Stack spacing={2}>
+              {recommendedSections.map((section) => (
+                <SectionOption
+                  key={section.id}
+                  section={section}
+                  selected={selectedSection === section.id}
+                  onSelect={setSelectedSection}
+                />
+              ))}
+            </Stack>
+          </>
+        ) : (
+          <Card variant="outlined" sx={{ mt: 2 }}>
+            <CardContent>
+              <Typography variant="overline" color="text.secondary">
+                Selected from map
+              </Typography>
+              <Typography variant="h6">{selected?.name}</Typography>
+              <Typography fontWeight={700}>{selected?.price}</Typography>
+              <Typography variant="body2" color="text.secondary">
+                {selected?.direction}
+              </Typography>
+            </CardContent>
+          </Card>
+        )}
 
         {selected?.warning && (
           <Alert severity="warning" sx={{ mt: 2 }}>
