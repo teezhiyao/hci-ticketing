@@ -13,6 +13,7 @@ import {
   Typography,
 } from "@mui/material";
 import PreferenceGuidedSelection from "./components/PreferenceGuidedSelection.jsx";
+import SeatAllocation from "./components/SeatAllocation.jsx";
 
 const event = {
   title: "Feng Ze — Bend The Lines",
@@ -96,7 +97,7 @@ function BookingSection({
   );
 }
 
-function BookingSummary({ selectedSection }) {
+function BookingSummary({ selectedSection, selectedSeats, seatsHeld }) {
   return (
     <Card
       variant="outlined"
@@ -129,7 +130,11 @@ function BookingSummary({ selectedSection }) {
           sx={{ mb: 2 }}
         >
           <Typography variant="h6">Booking summary</Typography>
-          <Chip label="08:28 left" size="small" color="primary" />
+          <Chip
+            label={seatsHeld ? "08:28 left" : "No seats held"}
+            size="small"
+            color={seatsHeld ? "primary" : "default"}
+          />
         </Stack>
 
         <Divider sx={{ mb: 2 }} />
@@ -165,14 +170,22 @@ function BookingSummary({ selectedSection }) {
             <Typography variant="overline" color="text.secondary">
               Seat allocation
             </Typography>
-            <Typography color="text.secondary">Not selected</Typography>
+            <Typography color={selectedSeats.length ? "text.primary" : "text.secondary"}>
+              {selectedSeats.length
+                ? selectedSeats
+                    .map((seat) => `${seat.row}${seat.number}`)
+                    .join(", ")
+                : "Not selected"}
+            </Typography>
           </Box>
 
           <Box>
             <Typography variant="overline" color="text.secondary">
               Subtotal
             </Typography>
-            <Typography variant="h6">—</Typography>
+            <Typography variant="h6">
+              {selectedSeats.length ? `$${selectedSeats.length * 140}` : "—"}
+            </Typography>
           </Box>
         </Stack>
       </CardContent>
@@ -183,6 +196,8 @@ function BookingSummary({ selectedSection }) {
 export default function App() {
   const [expandedPanel, setExpandedPanel] = useState("seats");
   const [selectedSection, setSelectedSection] = useState(null);
+  const [selectedSeats, setSelectedSeats] = useState([]);
+  const [seatsHeld, setSeatsHeld] = useState(false);
 
   const changePanel = (panel) => (_, isExpanded) => {
     setExpandedPanel(isExpanded ? panel : false);
@@ -190,7 +205,20 @@ export default function App() {
 
   const handleSelectSection = (section) => {
     setSelectedSection(section);
+    setSelectedSeats([]);
+    setSeatsHeld(false);
     setExpandedPanel("allocation");
+  };
+
+  const handleSeatSelectionChange = (seats) => {
+    setSelectedSeats(seats);
+    setSeatsHeld(false);
+  };
+
+  const handleHoldSeats = (seats) => {
+    setSelectedSeats(seats);
+    setSeatsHeld(true);
+    setExpandedPanel("ticket-type");
   };
 
   return (
@@ -299,32 +327,37 @@ export default function App() {
             onChange={changePanel}
             disabled={!selectedSection}
           >
-            <Stack spacing={1}>
-              <Typography variant="h6">{selectedSection?.name}</Typography>
-              <Typography color="text.secondary">
-                The venue map, expected-view preview, and exact available seats
-                will appear here. Select the panel header again to collapse
-                this section.
-              </Typography>
-            </Stack>
+            <SeatAllocation
+              selectedSection={selectedSection}
+              onSelectionChange={handleSeatSelectionChange}
+              onContinue={handleHoldSeats}
+            />
           </BookingSection>
 
           <BookingSection
             panel="ticket-type"
             number="4"
             title="Ticket type"
-            status="Complete seat allocation first"
+            status={seatsHeld ? "Seats held" : "Complete seat allocation first"}
             expanded={expandedPanel === "ticket-type"}
             onChange={changePanel}
+            disabled={!seatsHeld}
           >
-            <Typography color="text.secondary">
-              Applicable standard or promotional ticket types will appear here
-              after exact seats have been selected.
-            </Typography>
+            <Stack spacing={1}>
+              <Typography variant="h6">Standard admission</Typography>
+              <Typography color="text.secondary">
+                Two tickets at $140 each. This is the only applicable ticket
+                type and has been selected automatically.
+              </Typography>
+            </Stack>
           </BookingSection>
         </Stack>
 
-        <BookingSummary selectedSection={selectedSection} />
+        <BookingSummary
+          selectedSection={selectedSection}
+          selectedSeats={selectedSeats}
+          seatsHeld={seatsHeld}
+        />
       </Box>
     </Box>
   );
