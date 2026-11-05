@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   base: process.env.GITHUB_ACTIONS
-    ? "/hci-seat-selection-prototype/"
+    ? "/hci-ticketing/"
     : "/",
   plugins: [react()],
 });
