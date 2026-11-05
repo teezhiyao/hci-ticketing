@@ -100,7 +100,7 @@ const venueSections = [
 
 const recommendedSectionIds = ["circle-2-a", "circle-3-b", "stalls-c"];
 
-function Preferences({ onApply, loadedDraft }) {
+function Preferences({ onApply, loadedDraft, onTrack }) {
   const [tickets, setTickets] = useState(2);
   const [maxPrice, setMaxPrice] = useState(150);
   const [sitTogether, setSitTogether] = useState(true);
@@ -118,7 +118,18 @@ function Preferences({ onApply, loadedDraft }) {
   }, [loadedDraft]);
 
   function applyPreferences() {
-    onApply({ tickets, maxPrice, sitTogether, view, excludeRestricted });
+    const nextPreferences = {
+      tickets,
+      maxPrice,
+      sitTogether,
+      view,
+      excludeRestricted,
+    };
+    onTrack?.("preferences_applied", nextPreferences);
+    if (maxPrice < 90) {
+      onTrack?.("no_match_triggered", { maxPrice });
+    }
+    onApply(nextPreferences);
   }
 
   return (
@@ -420,6 +431,7 @@ function MatchingVenueSections({
   onSelectSection,
   selectionMode,
   onBrowseMap,
+  onTrack,
 }) {
   const [selectedSection, setSelectedSection] = useState("circle-2-a");
   const selected = venueSections.find(
@@ -430,6 +442,16 @@ function MatchingVenueSections({
   );
   const noExactMatch =
     selectionMode === "guided" && preferences.maxPrice < 90;
+
+  const selectMapSection = (sectionId) => {
+    setSelectedSection(sectionId);
+    onTrack?.("map_section_inspected", { sectionId });
+  };
+
+  const selectRecommendation = (sectionId) => {
+    setSelectedSection(sectionId);
+    onTrack?.("recommendation_inspected", { sectionId });
+  };
 
   useEffect(() => {
     if (
@@ -488,7 +510,7 @@ function MatchingVenueSections({
         )}
         <VenueSectionMap
           selectedSection={selectedSection}
-          onSelect={setSelectedSection}
+          onSelect={selectMapSection}
           recommendationMode={selectionMode === "guided"}
         />
 
@@ -501,7 +523,7 @@ function MatchingVenueSections({
                   key={section.id}
                   section={section}
                   selected={selectedSection === section.id}
-                  onSelect={setSelectedSection}
+                  onSelect={selectRecommendation}
                 />
               ))}
             </Stack>
@@ -532,7 +554,9 @@ function MatchingVenueSections({
           <Button
             variant="contained"
             fullWidth
-            onClick={() => onSelectSection?.(selected)}
+            onClick={() =>
+              onSelectSection?.(selected, { selectionMode })
+            }
           >
             Select section
           </Button>
@@ -546,6 +570,7 @@ export default function PreferenceGuidedSelection({
   onSelectSection,
   loadedDraft,
   onPreferencesChange,
+  onTrack,
 }) {
   const [selectionMode, setSelectionMode] = useState("guided");
   const [preferences, setPreferences] = useState({
@@ -585,7 +610,11 @@ export default function PreferenceGuidedSelection({
               value={selectionMode}
               exclusive
               size="small"
-              onChange={(_, value) => value && setSelectionMode(value)}
+              onChange={(_, value) => {
+                if (!value) return;
+                onTrack?.("selection_path_changed", { path: value });
+                setSelectionMode(value);
+              }}
               aria-label="Section selection path"
             >
               <ToggleButton value="browse">Browse map</ToggleButton>
@@ -607,13 +636,22 @@ export default function PreferenceGuidedSelection({
         }}
       >
         {selectionMode === "guided" && (
-          <Preferences onApply={applyPreferences} loadedDraft={loadedDraft} />
+          <Preferences
+            onApply={applyPreferences}
+            loadedDraft={loadedDraft}
+            onTrack={onTrack}
+          />
         )}
         <MatchingVenueSections
           preferences={preferences}
           onSelectSection={onSelectSection}
           selectionMode={selectionMode}
-          onBrowseMap={() => setSelectionMode("browse")}
+          onBrowseMap={() => {
+            onTrack?.("no_match_recovery", { action: "browse-map" });
+            onTrack?.("selection_path_changed", { path: "browse" });
+            setSelectionMode("browse");
+          }}
+          onTrack={onTrack}
         />
       </Box>
     </Stack>

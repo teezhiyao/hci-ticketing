@@ -8,6 +8,7 @@ import {
   Chip,
   Divider,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
 import expectedViewImage from "../assets/expected-view.jpg";
@@ -28,8 +29,11 @@ export default function BookingReview({
   selectedSeats,
   secondsRemaining,
   onChangeSeats,
+  onConfirm,
+  getEvaluationLog,
 }) {
   const [confirmed, setConfirmed] = useState(false);
+  const [copyStatus, setCopyStatus] = useState("idle");
 
   const reservationKey = useMemo(
     () => selectedSeats.map((seat) => `${seat.row}${seat.number}`).join("-"),
@@ -39,7 +43,26 @@ export default function BookingReview({
   useEffect(() => {
     if (!active) return;
     setConfirmed(false);
+    setCopyStatus("idle");
   }, [active, reservationKey]);
+
+  const evaluationLogText = confirmed
+    ? JSON.stringify(getEvaluationLog?.() ?? {}, null, 2)
+    : "";
+
+  const handleConfirm = () => {
+    onConfirm?.();
+    setConfirmed(true);
+  };
+
+  const handleCopyLog = async () => {
+    try {
+      await navigator.clipboard.writeText(evaluationLogText);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("manual");
+    }
+  };
 
   const seatLabels = selectedSeats
     .map((seat) => `Row ${seat.row}, Seat ${seat.number}`)
@@ -74,10 +97,49 @@ export default function BookingReview({
       )}
 
       {confirmed && (
-        <Alert severity="success">
-          Seat selection confirmed for this prototype. No payment or real
-          purchase has been made.
-        </Alert>
+        <Stack spacing={2}>
+          <Alert severity="success">
+            Seat selection confirmed for this prototype. No payment or real
+            purchase has been made.
+          </Alert>
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="h6">Anonymous evaluation log</Typography>
+              <Typography color="text.secondary" sx={{ mb: 2 }}>
+                This log contains only actions performed in this prototype and
+                elapsed task time. Copy it and paste it into the evaluation
+                survey. Nothing is submitted automatically.
+              </Typography>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                alignItems={{ xs: "stretch", sm: "center" }}
+              >
+                <Button variant="contained" onClick={handleCopyLog}>
+                  Copy evaluation log
+                </Button>
+                {copyStatus === "copied" && (
+                  <Chip label="Copied to clipboard" color="success" />
+                )}
+              </Stack>
+              {copyStatus === "manual" && (
+                <Box sx={{ mt: 2 }}>
+                  <Alert severity="info" sx={{ mb: 1 }}>
+                    Clipboard access was unavailable. Select and copy the log
+                    below manually.
+                  </Alert>
+                  <TextField
+                    value={evaluationLogText}
+                    multiline
+                    minRows={6}
+                    fullWidth
+                    slotProps={{ htmlInput: { readOnly: true } }}
+                  />
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Stack>
       )}
 
       <Box
@@ -198,7 +260,7 @@ export default function BookingReview({
         <Button
           variant="contained"
           size="large"
-          onClick={() => setConfirmed(true)}
+          onClick={handleConfirm}
           disabled={confirmed || secondsRemaining === 0}
         >
           {confirmed ? "Selection confirmed" : "Confirm selection"}

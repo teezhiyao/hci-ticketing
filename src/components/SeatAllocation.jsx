@@ -130,6 +130,7 @@ export default function SeatAllocation({
   selectedSection,
   onSelectionChange,
   onContinue,
+  onTrack,
 }) {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [selectionMessage, setSelectionMessage] = useState("");
@@ -155,6 +156,9 @@ export default function SeatAllocation({
     );
 
     if (exists) {
+      onTrack?.("seat_deselected", {
+        seat: `${seat.row}${seat.number}`,
+      });
       updateSelection(
         selectedSeats.filter(
           (selectedSeat) => seatKey(selectedSeat) !== seatKey(seat),
@@ -164,16 +168,34 @@ export default function SeatAllocation({
     }
 
     if (selectedSeats.length === 2) {
+      onTrack?.("seat_selection_limit_reached");
       setSelectionMessage(
         "Two tickets were requested. Deselect a seat before choosing another.",
       );
       return;
     }
 
-    updateSelection([...selectedSeats, { ...seat, price: seatPrice }]);
+    const nextSeats = [...selectedSeats, { ...seat, price: seatPrice }];
+    onTrack?.("seat_selected", { seat: `${seat.row}${seat.number}` });
+    if (nextSeats.length === 2) {
+      const [first, second] = nextSeats;
+      const adjacent =
+        first.row === second.row &&
+        Math.abs(first.number - second.number) === 1;
+      onTrack?.(
+        adjacent ? "valid_pair_completed" : "invalid_pair_attempted",
+        {
+          seats: nextSeats.map(
+            (selectedSeat) => `${selectedSeat.row}${selectedSeat.number}`,
+          ),
+        },
+      );
+    }
+    updateSelection(nextSeats);
   }
 
   function clearSelection() {
+    onTrack?.("seat_selection_cleared");
     setSelectionMessage("");
     updateSelection([]);
   }

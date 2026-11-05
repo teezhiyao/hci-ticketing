@@ -21,6 +21,7 @@ import PreferenceGuidedSelection from "./components/PreferenceGuidedSelection.js
 import SeatAllocation from "./components/SeatAllocation.jsx";
 import DraftSetupPage from "./components/DraftSetupPage.jsx";
 import BookingReview from "./components/BookingReview.jsx";
+import useEvaluationTracking from "./hooks/useEvaluationTracking.js";
 
 const event = {
   title: "Feng Ze — Bend The Lines",
@@ -240,6 +241,7 @@ function BookingSummary({
 }
 
 export default function App() {
+  const { trackEvent, getEvaluationLog } = useEvaluationTracking();
   const [page, setPage] = useState("booking");
   const [savedDraft, setSavedDraft] = useState(defaultSavedDraft);
   const [expandedPanel, setExpandedPanel] = useState("seats");
@@ -272,7 +274,11 @@ export default function App() {
     setExpandedPanel(isExpanded ? panel : false);
   };
 
-  const handleSelectSection = (section) => {
+  const handleSelectSection = (section, metadata = {}) => {
+    trackEvent("section_selected", {
+      sectionId: section.id,
+      path: metadata.selectionMode ?? "unknown",
+    });
     setSelectedSection(section);
     setSelectedSeats([]);
     setSeatsHeld(false);
@@ -285,24 +291,44 @@ export default function App() {
   };
 
   const handleHoldSeats = (seats) => {
+    trackEvent("seats_held", {
+      seats: seats.map((seat) => `${seat.row}${seat.number}`),
+    });
+    trackEvent("review_reached");
     setSelectedSeats(seats);
     setSeatsHeld(true);
     setExpandedPanel("ticket-type");
   };
 
   const handleChangeSeats = () => {
+    trackEvent("change_seats_selected");
     setSeatsHeld(false);
     setExpandedPanel("allocation");
   };
 
   const handleLoadDraft = () => {
+    trackEvent("draft_loaded");
     setLoadedDraft({ ...savedDraft, loadedAt: Date.now() });
     setDraftDialogOpen(false);
   };
 
   const handleSaveDraft = (draft) => {
+    trackEvent("draft_saved", {
+      tickets: draft.tickets,
+      maxPrice: draft.maxPrice,
+    });
     setSavedDraft({ ...draft, savedAt: Date.now() });
     setPage("booking");
+    setDraftDialogOpen(true);
+  };
+
+  const handleOpenDraft = () => {
+    trackEvent("draft_opened");
+    setPage("draft");
+  };
+
+  const handleOpenSavedDraft = () => {
+    trackEvent("saved_draft_previewed");
     setDraftDialogOpen(true);
   };
 
@@ -330,7 +356,7 @@ export default function App() {
             <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
               <Button
                 variant="outlined"
-                onClick={() => setPage("draft")}
+                onClick={handleOpenDraft}
                 sx={{
                   color: "common.white",
                   borderColor: "rgba(255,255,255,.55)",
@@ -421,7 +447,7 @@ export default function App() {
                 <Button
                   variant="outlined"
                   aria-label="Load saved draft. More information is available in the tooltip."
-                  onClick={() => setDraftDialogOpen(true)}
+                  onClick={handleOpenSavedDraft}
                 >
                   Load saved draft&nbsp; ⓘ
                 </Button>
@@ -432,6 +458,7 @@ export default function App() {
               onSelectSection={handleSelectSection}
               loadedDraft={loadedDraft}
               onPreferencesChange={setPreferences}
+              onTrack={trackEvent}
             />
           </BookingSection>
 
@@ -452,6 +479,7 @@ export default function App() {
               selectedSection={selectedSection}
               onSelectionChange={handleSeatSelectionChange}
               onContinue={handleHoldSeats}
+              onTrack={trackEvent}
             />
           </BookingSection>
 
@@ -471,6 +499,8 @@ export default function App() {
               selectedSeats={selectedSeats}
               secondsRemaining={holdSeconds}
               onChangeSeats={handleChangeSeats}
+              onConfirm={() => trackEvent("selection_confirmed")}
+              getEvaluationLog={getEvaluationLog}
             />
           </BookingSection>
         </Stack>
