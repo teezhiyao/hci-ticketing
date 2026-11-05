@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Accordion,
   AccordionDetails,
@@ -28,6 +28,16 @@ const event = {
   date: "23 October 2026",
   time: "7:30 PM",
 };
+
+const HOLD_DURATION_SECONDS = 10 * 60;
+
+function formatHoldTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(
+    remainingSeconds,
+  ).padStart(2, "0")}`;
+}
 
 const defaultSavedDraft = {
   id: "concert-default",
@@ -119,6 +129,7 @@ function BookingSummary({
   selectedSection,
   selectedSeats,
   seatsHeld,
+  holdSeconds,
   preferences,
 }) {
   return (
@@ -154,7 +165,11 @@ function BookingSummary({
         >
           <Typography variant="h6">Booking summary</Typography>
           <Chip
-            label={seatsHeld ? "08:28 left" : "No seats held"}
+            label={
+              seatsHeld
+                ? `${formatHoldTime(holdSeconds)} left`
+                : "No seats held"
+            }
             size="small"
             color={seatsHeld ? "primary" : "default"}
           />
@@ -231,6 +246,7 @@ export default function App() {
   const [selectedSection, setSelectedSection] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [seatsHeld, setSeatsHeld] = useState(false);
+  const [holdSeconds, setHoldSeconds] = useState(HOLD_DURATION_SECONDS);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
   const [loadedDraft, setLoadedDraft] = useState(null);
   const [preferences, setPreferences] = useState({
@@ -240,6 +256,17 @@ export default function App() {
     view: "center",
     excludeRestricted: true,
   });
+
+  useEffect(() => {
+    if (!seatsHeld) return undefined;
+
+    setHoldSeconds(HOLD_DURATION_SECONDS);
+    const timer = window.setInterval(() => {
+      setHoldSeconds((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [seatsHeld]);
 
   const changePanel = (panel) => (_, isExpanded) => {
     setExpandedPanel(isExpanded ? panel : false);
@@ -442,6 +469,7 @@ export default function App() {
               event={event}
               selectedSection={selectedSection}
               selectedSeats={selectedSeats}
+              secondsRemaining={holdSeconds}
               onChangeSeats={handleChangeSeats}
             />
           </BookingSection>
@@ -451,6 +479,7 @@ export default function App() {
           selectedSection={selectedSection}
           selectedSeats={selectedSeats}
           seatsHeld={seatsHeld}
+          holdSeconds={holdSeconds}
           preferences={preferences}
         />
       </Box>

@@ -13,8 +13,6 @@ import {
 import expectedViewImage from "../assets/expected-view.jpg";
 
 const PRICE_PER_SEAT = 140;
-const HOLD_DURATION_SECONDS = 10 * 60;
-
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -28,11 +26,9 @@ export default function BookingReview({
   event,
   selectedSection,
   selectedSeats,
+  secondsRemaining,
   onChangeSeats,
 }) {
-  const [secondsRemaining, setSecondsRemaining] = useState(
-    HOLD_DURATION_SECONDS,
-  );
   const [confirmed, setConfirmed] = useState(false);
 
   const reservationKey = useMemo(
@@ -41,16 +37,8 @@ export default function BookingReview({
   );
 
   useEffect(() => {
-    if (!active) return undefined;
-
-    setSecondsRemaining(HOLD_DURATION_SECONDS);
+    if (!active) return;
     setConfirmed(false);
-
-    const timer = window.setInterval(() => {
-      setSecondsRemaining((current) => Math.max(0, current - 1));
-    }, 1000);
-
-    return () => window.clearInterval(timer);
   }, [active, reservationKey]);
 
   const seatLabels = selectedSeats
