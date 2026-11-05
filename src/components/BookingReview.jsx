@@ -1,0 +1,221 @@
+import { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  Stack,
+  Typography,
+} from "@mui/material";
+import expectedViewImage from "../assets/expected-view.jpg";
+
+const PRICE_PER_SEAT = 140;
+const HOLD_DURATION_SECONDS = 10 * 60;
+
+function formatTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(
+    remainingSeconds,
+  ).padStart(2, "0")}`;
+}
+
+export default function BookingReview({
+  active,
+  event,
+  selectedSection,
+  selectedSeats,
+  onChangeSeats,
+}) {
+  const [secondsRemaining, setSecondsRemaining] = useState(
+    HOLD_DURATION_SECONDS,
+  );
+  const [confirmed, setConfirmed] = useState(false);
+
+  const reservationKey = useMemo(
+    () => selectedSeats.map((seat) => `${seat.row}${seat.number}`).join("-"),
+    [selectedSeats],
+  );
+
+  useEffect(() => {
+    if (!active) return undefined;
+
+    setSecondsRemaining(HOLD_DURATION_SECONDS);
+    setConfirmed(false);
+
+    const timer = window.setInterval(() => {
+      setSecondsRemaining((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [active, reservationKey]);
+
+  const seatLabels = selectedSeats
+    .map((seat) => `Row ${seat.row}, Seat ${seat.number}`)
+    .join("; ");
+  const subtotal = selectedSeats.length * PRICE_PER_SEAT;
+
+  return (
+    <Stack spacing={3}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        gap={2}
+      >
+        <Box>
+          <Typography variant="h5">Review your seat selection</Typography>
+          <Typography color="text.secondary">
+            Check the complete selection before confirming the reservation.
+          </Typography>
+        </Box>
+        <Chip
+          color={secondsRemaining > 120 ? "warning" : "error"}
+          label={`Seats held for ${formatTime(secondsRemaining)}`}
+        />
+      </Stack>
+
+      {secondsRemaining === 0 && (
+        <Alert severity="error">
+          The reservation hold has expired. Return to seat allocation to check
+          current availability.
+        </Alert>
+      )}
+
+      {confirmed && (
+        <Alert severity="success">
+          Seat selection confirmed for this prototype. No payment or real
+          purchase has been made.
+        </Alert>
+      )}
+
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "minmax(0, 1fr) 310px" },
+          gap: 3,
+        }}
+      >
+        <Card variant="outlined">
+          <CardContent>
+            <Typography variant="h6">Booking details</Typography>
+            <Divider sx={{ my: 2 }} />
+
+            <Stack spacing={2.25}>
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Event
+                </Typography>
+                <Typography fontWeight={700}>{event.title}</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {event.venue}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Date and time
+                </Typography>
+                <Typography>
+                  {event.date}, {event.time}
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Section and seats
+                </Typography>
+                <Typography fontWeight={700}>{selectedSection?.name}</Typography>
+                <Typography>{seatLabels}</Typography>
+              </Box>
+
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Selection checks
+                </Typography>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                  <Chip label="Adjacent seats" color="success" size="small" />
+                  <Chip label="No restricted view" color="success" size="small" />
+                  <Chip label="Within budget" color="success" size="small" />
+                </Stack>
+              </Box>
+
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Ticket type
+                </Typography>
+                <Typography>Standard admission</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Automatically selected because this is the only applicable
+                  ticket type.
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
+        </Card>
+
+        <Stack spacing={2}>
+          <Card variant="outlined">
+            <Box
+              component="img"
+              src={expectedViewImage}
+              alt="Illustrative expected view from the selected section"
+              sx={{ width: "100%", height: 150, objectFit: "cover" }}
+            />
+            <CardContent>
+              <Typography variant="overline" color="text.secondary">
+                Expected view
+              </Typography>
+              <Typography fontWeight={700}>Central view from Circle 2</Typography>
+              <Typography variant="caption" color="text.secondary">
+                Illustrative section-level preview; the exact view may vary by
+                seat.
+              </Typography>
+            </CardContent>
+          </Card>
+
+          <Card variant="outlined">
+            <CardContent>
+              <Typography variant="h6">Price summary</Typography>
+              <Divider sx={{ my: 2 }} />
+              <Stack spacing={1}>
+                <Stack direction="row" justifyContent="space-between">
+                  <Typography>
+                    {selectedSeats.length} tickets × ${PRICE_PER_SEAT}
+                  </Typography>
+                  <Typography>${subtotal}</Typography>
+                </Stack>
+                <Stack direction="row" justifyContent="space-between">
+                  <Typography>Booking fee</Typography>
+                  <Typography>$0</Typography>
+                </Stack>
+                <Divider />
+                <Stack direction="row" justifyContent="space-between">
+                  <Typography fontWeight={700}>Subtotal</Typography>
+                  <Typography variant="h6">${subtotal}</Typography>
+                </Stack>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Stack>
+      </Box>
+
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+        <Button variant="outlined" onClick={onChangeSeats} disabled={confirmed}>
+          Change seats
+        </Button>
+        <Button
+          variant="contained"
+          size="large"
+          onClick={() => setConfirmed(true)}
+          disabled={confirmed || secondsRemaining === 0}
+        >
+          {confirmed ? "Selection confirmed" : "Confirm selection"}
+        </Button>
+      </Stack>
+    </Stack>
+  );
+}

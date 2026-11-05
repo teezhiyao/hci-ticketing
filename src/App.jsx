@@ -20,6 +20,7 @@ import {
 import PreferenceGuidedSelection from "./components/PreferenceGuidedSelection.jsx";
 import SeatAllocation from "./components/SeatAllocation.jsx";
 import DraftSetupPage from "./components/DraftSetupPage.jsx";
+import BookingReview from "./components/BookingReview.jsx";
 
 const event = {
   title: "Feng Ze — Bend The Lines",
@@ -262,6 +263,11 @@ export default function App() {
     setExpandedPanel("ticket-type");
   };
 
+  const handleChangeSeats = () => {
+    setSeatsHeld(false);
+    setExpandedPanel("allocation");
+  };
+
   const handleLoadDraft = () => {
     setLoadedDraft({ ...savedDraft, loadedAt: Date.now() });
     setDraftDialogOpen(false);
@@ -425,19 +431,19 @@ export default function App() {
           <BookingSection
             panel="ticket-type"
             number="4"
-            title="Ticket type"
-            status={seatsHeld ? "Seats held" : "Complete seat allocation first"}
+            title="Review and confirmation"
+            status={seatsHeld ? "Seats held for review" : "Complete seat allocation first"}
             expanded={expandedPanel === "ticket-type"}
             onChange={changePanel}
             disabled={!seatsHeld}
           >
-            <Stack spacing={1}>
-              <Typography variant="h6">Standard admission</Typography>
-              <Typography color="text.secondary">
-                Two tickets at $140 each. This is the only applicable ticket
-                type and has been selected automatically.
-              </Typography>
-            </Stack>
+            <BookingReview
+              active={seatsHeld}
+              event={event}
+              selectedSection={selectedSection}
+              selectedSeats={selectedSeats}
+              onChangeSeats={handleChangeSeats}
+            />
           </BookingSection>
         </Stack>
 
