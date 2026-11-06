@@ -17,7 +17,6 @@ import {
 } from "@mui/material";
 import expectedViewImage from "../assets/expected-view.jpg";
 
-const PRICE_PER_SEAT = 140;
 function formatTime(seconds) {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -31,6 +30,7 @@ export default function BookingReview({
   event,
   selectedSection,
   selectedSeats,
+  maxPrice,
   secondsRemaining,
   onChangeSeats,
   onConfirm,
@@ -74,7 +74,13 @@ export default function BookingReview({
   const seatLabels = selectedSeats
     .map((seat) => `Row ${seat.row}, Seat ${seat.number}`)
     .join("; ");
-  const subtotal = selectedSeats.length * PRICE_PER_SEAT;
+  const pricePerSeat =
+    selectedSeats[0]?.price ?? selectedSection?.seatPrice ?? 140;
+  const subtotal = selectedSeats.reduce(
+    (total, seat) => total + (seat.price ?? pricePerSeat),
+    0,
+  );
+  const isWithinBudget = pricePerSeat <= maxPrice;
 
   return (
     <Stack spacing={3}>
@@ -157,7 +163,11 @@ export default function BookingReview({
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                   <Chip label="Adjacent seats" color="success" size="small" />
                   <Chip label="No restricted view" color="success" size="small" />
-                  <Chip label="Within budget" color="success" size="small" />
+                  <Chip
+                    label={isWithinBudget ? "Within budget" : "Over budget"}
+                    color={isWithinBudget ? "success" : "warning"}
+                    size="small"
+                  />
                 </Stack>
               </Box>
 
@@ -187,7 +197,10 @@ export default function BookingReview({
               <Typography variant="overline" color="text.secondary">
                 Expected view
               </Typography>
-              <Typography fontWeight={700}>Central view from Circle 2</Typography>
+              <Typography fontWeight={700}>
+                {selectedSection?.expectedViewLabel ??
+                  `Expected view from ${selectedSection?.name ?? "selected section"}`}
+              </Typography>
               <Typography variant="caption" color="text.secondary">
                 Illustrative section-level preview; the exact view may vary by
                 seat.
@@ -202,7 +215,7 @@ export default function BookingReview({
               <Stack spacing={1}>
                 <Stack direction="row" justifyContent="space-between">
                   <Typography>
-                    {selectedSeats.length} tickets × ${PRICE_PER_SEAT}
+                    {selectedSeats.length} tickets × ${pricePerSeat}
                   </Typography>
                   <Typography>${subtotal}</Typography>
                 </Stack>

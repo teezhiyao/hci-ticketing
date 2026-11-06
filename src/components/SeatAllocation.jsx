@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
   Box,
@@ -54,8 +54,6 @@ const rows = [
   },
 ];
 
-const seatPrice = 140;
-
 const viewControlStyles = {
   display: "grid",
   placeItems: "center",
@@ -68,6 +66,38 @@ const viewControlStyles = {
 
 function seatKey(seat) {
   return `${seat.row}-${seat.number}`;
+}
+
+function seatsAreAdjacent(selectedSeats) {
+  if (selectedSeats.length !== 2) return false;
+  const [first, second] = selectedSeats;
+  return (
+    first.row === second.row &&
+    Math.abs(first.number - second.number) === 1
+  );
+}
+
+function leavesIsolatedSeat(selectedSeats) {
+  if (!seatsAreAdjacent(selectedSeats)) return false;
+
+  const selectedRow = rows.find((row) => row.row === selectedSeats[0].row);
+  if (!selectedRow) return false;
+
+  const selectedNumbers = new Set(selectedSeats.map((seat) => seat.number));
+  const remainingAvailable = new Set(
+    selectedRow.seats
+      .filter(
+        (seat) =>
+          seat.status === "available" && !selectedNumbers.has(seat.number),
+      )
+      .map((seat) => seat.number),
+  );
+
+  return Array.from(remainingAvailable).some(
+    (number) =>
+      !remainingAvailable.has(number - 1) &&
+      !remainingAvailable.has(number + 1),
+  );
 }
 
 function SeatButton({ seat, selected, onSelect }) {
@@ -128,21 +158,31 @@ function LegendItem({ color, borderColor, label }) {
 
 export default function SeatAllocation({
   selectedSection,
+  maxPrice,
   onSelectionChange,
   onContinue,
   onTrack,
 }) {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [selectionMessage, setSelectionMessage] = useState("");
+  const seatPrice = selectedSection?.seatPrice ?? 140;
+  const isWithinBudget = seatPrice <= maxPrice;
 
-  const isValidPair = useMemo(() => {
-    if (selectedSeats.length !== 2) return false;
-    const [first, second] = selectedSeats;
-    return (
-      first.row === second.row &&
-      Math.abs(first.number - second.number) === 1
-    );
-  }, [selectedSeats]);
+  const isAdjacentPair = useMemo(
+    () => seatsAreAdjacent(selectedSeats),
+    [selectedSeats],
+  );
+  const createsIsolatedSeat = useMemo(
+    () => leavesIsolatedSeat(selectedSeats),
+    [selectedSeats],
+  );
+  const isValidPair = isAdjacentPair && !createsIsolatedSeat;
+
+  useEffect(() => {
+    setSelectionMessage("");
+    setSelectedSeats([]);
+    onSelectionChange([]);
+  }, [selectedSection?.id]);
 
   function updateSelection(nextSeats) {
     setSelectedSeats(nextSeats);
@@ -178,12 +218,14 @@ export default function SeatAllocation({
     const nextSeats = [...selectedSeats, { ...seat, price: seatPrice }];
     onTrack?.("seat_selected", { seat: `${seat.row}${seat.number}` });
     if (nextSeats.length === 2) {
-      const [first, second] = nextSeats;
-      const adjacent =
-        first.row === second.row &&
-        Math.abs(first.number - second.number) === 1;
+      const adjacent = seatsAreAdjacent(nextSeats);
+      const isolatesSeat = adjacent && leavesIsolatedSeat(nextSeats);
       onTrack?.(
-        adjacent ? "valid_pair_completed" : "invalid_pair_attempted",
+        !adjacent
+          ? "invalid_pair_attempted"
+          : isolatesSeat
+            ? "isolated_seat_attempted"
+            : "valid_pair_completed",
         {
           seats: nextSeats.map(
             (selectedSeat) => `${selectedSeat.row}${selectedSeat.number}`,
@@ -382,7 +424,10 @@ export default function SeatAllocation({
             <Typography variant="overline" color="text.secondary">
               Interactive expected-view preview
             </Typography>
-            <Typography variant="h6">Central view from Circle 2</Typography>
+            <Typography variant="h6">
+              {selectedSection?.expectedViewLabel ??
+                `Expected view from ${selectedSection?.name ?? "selected section"}`}
+            </Typography>
             <Typography variant="body2" color="text.secondary">
               Illustrative section-level preview. The exact view may vary by
               row and seat.
@@ -401,21 +446,31 @@ export default function SeatAllocation({
       {selectedSeats.length === 1 && (
         <Alert severity="info">
           Select the seat immediately beside Row {selectedSeats[0].row}, Seat{" "}
-          {selectedSeats[0].number} to keep the pair together.
+          {selectedSeats[0].number} to keep the pair together. Some adjacent
+          pairs may be unavailable if they leave one isolated seat.
         </Alert>
       )}
 
-      {selectedSeats.length === 2 && !isValidPair && (
+      {selectedSeats.length === 2 && !isAdjacentPair && (
         <Alert severity="error">
           These seats are not adjacent. Deselect one seat and choose the seat
           immediately beside the other selection.
         </Alert>
       )}
 
+      {selectedSeats.length === 2 && createsIsolatedSeat && (
+        <Alert severity="error">
+          This pair would leave one available seat isolated from the other
+          available seats. Choose a pair at either end of the available group.
+        </Alert>
+      )}
+
       {isValidPair && (
-        <Alert severity="success">
-          Valid adjacent pair selected. Both seats are within budget and no
-          restricted view is identified.
+        <Alert severity={isWithinBudget ? "success" : "warning"}>
+          Valid adjacent pair selected. No restricted view or isolated single
+          seat is identified.
+          {!isWithinBudget &&
+            ` The $${seatPrice} representative price exceeds your $${maxPrice} maximum.`}
         </Alert>
       )}
 

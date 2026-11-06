@@ -231,7 +231,13 @@ function BookingSummary({
               Subtotal
             </Typography>
             <Typography variant="h6">
-              {selectedSeats.length ? `$${selectedSeats.length * 140}` : "—"}
+              {selectedSeats.length
+                ? `$${selectedSeats.reduce(
+                    (total, seat) =>
+                      total + (seat.price ?? selectedSection?.seatPrice ?? 140),
+                    0,
+                  )}`
+                : "—"}
             </Typography>
           </Box>
         </Stack>
@@ -477,6 +483,7 @@ export default function App() {
           >
             <SeatAllocation
               selectedSection={selectedSection}
+              maxPrice={preferences.maxPrice}
               onSelectionChange={handleSeatSelectionChange}
               onContinue={handleHoldSeats}
               onTrack={trackEvent}
@@ -497,6 +504,7 @@ export default function App() {
               event={event}
               selectedSection={selectedSection}
               selectedSeats={selectedSeats}
+              maxPrice={preferences.maxPrice}
               secondsRemaining={holdSeconds}
               onChangeSeats={handleChangeSeats}
               onConfirm={() => trackEvent("selection_confirmed")}

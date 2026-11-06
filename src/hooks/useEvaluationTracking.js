@@ -78,6 +78,7 @@ export default function useEvaluationTracking() {
         noMatchTriggered: Boolean(eventOfType("no_match_triggered")),
         noMatchRecovery: noMatchRecovery?.details?.action ?? null,
         invalidPairAttempts: eventsOfType("invalid_pair_attempted").length,
+        isolatedSeatAttempts: eventsOfType("isolated_seat_attempted").length,
         seatSelectionAttempts: eventsOfType("seat_selected").length,
         draftOpened: Boolean(eventOfType("draft_opened")),
         draftSaved: Boolean(eventOfType("draft_saved")),
