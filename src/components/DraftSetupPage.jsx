@@ -184,14 +184,6 @@ export default function DraftSetupPage({ initialDraft, onBack, onSave }) {
                     <ToggleButton value="any">Any</ToggleButton>
                   </ToggleButtonGroup>
                 </Box>
-                <Box>
-                  <Typography gutterBottom>Priority order</Typography>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                    <Chip label="1  Price limit" variant="outlined" />
-                    <Chip label="2  Seats together" variant="outlined" />
-                    <Chip label="3  Viewing direction" variant="outlined" />
-                  </Stack>
-                </Box>
                 <FormControlLabel
                   control={
                     <Checkbox
