@@ -162,6 +162,11 @@ export default function BookingReview({
                 </Typography>
                 <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                   <Chip label="Adjacent seats" color="success" size="small" />
+                  <Chip
+                    label="No isolated seats"
+                    color="success"
+                    size="small"
+                  />
                   <Chip label="No restricted view" color="success" size="small" />
                   <Chip
                     label={isWithinBudget ? "Within budget" : "Over budget"}

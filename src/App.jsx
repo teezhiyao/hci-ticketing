@@ -370,10 +370,6 @@ export default function App() {
               >
                 Prepare a draft
               </Button>
-              <Chip
-                label="Seats are not reserved until confirmation"
-                sx={{ bgcolor: "rgba(255,255,255,.12)", color: "common.white" }}
-              />
             </Stack>
           </Stack>
         </Box>
@@ -428,7 +424,7 @@ export default function App() {
             panel="seats"
             number="2"
             title="Seats — enter preferences and review matches"
-            status="Current step"
+            status={selectedSection ? `Completed — ${selectedSection.name}` : "Current step"}
             expanded={expandedPanel === "seats"}
             onChange={changePanel}
           >

@@ -460,8 +460,9 @@ export default function SeatAllocation({
 
       {selectedSeats.length === 2 && createsIsolatedSeat && (
         <Alert severity="error">
-          This pair would leave one available seat isolated from the other
-          available seats. Choose a pair at either end of the available group.
+          This pair would leave one or more available seats isolated from the
+          remaining seat group. Choose a pair at either end of the available
+          group.
         </Alert>
       )}
 
