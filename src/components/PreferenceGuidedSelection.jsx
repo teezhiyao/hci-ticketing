@@ -554,11 +554,12 @@ function MatchingVenueSections({
           <Button
             variant="contained"
             fullWidth
+            disabled={noExactMatch}
             onClick={() =>
               onSelectSection?.(selected, { selectionMode })
             }
           >
-            Select section
+            {noExactMatch ? "Resolve requirements to continue" : "Select section"}
           </Button>
         </Stack>
       </CardContent>

@@ -225,14 +225,24 @@ export default function BookingReview({
         <Button variant="outlined" onClick={onChangeSeats} disabled={confirmed}>
           Change seats
         </Button>
-        <Button
-          variant="contained"
-          size="large"
-          onClick={handleConfirm}
-          disabled={confirmed || secondsRemaining === 0}
-        >
-          {confirmed ? "Selection confirmed" : "Confirm selection"}
-        </Button>
+        {confirmed ? (
+          <Button
+            variant="contained"
+            size="large"
+            onClick={() => setLogDialogOpen(true)}
+          >
+            View evaluation log
+          </Button>
+        ) : (
+          <Button
+            variant="contained"
+            size="large"
+            onClick={handleConfirm}
+            disabled={secondsRemaining === 0}
+          >
+            Confirm selection
+          </Button>
+        )}
       </Stack>
 
       <Dialog
