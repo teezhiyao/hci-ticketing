@@ -253,7 +253,7 @@ export default function SeatAllocation({
         <Box>
           <Typography variant="h5">Choose two adjacent seats</Typography>
           <Typography color="text.secondary">
-            {selectedSection?.name} · $140 per ticket
+            {selectedSection?.name} · ${seatPrice} per ticket
           </Typography>
         </Box>
         <Chip

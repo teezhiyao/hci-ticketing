@@ -3,6 +3,7 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Alert,
   Box,
   Button,
   Card,
@@ -256,6 +257,7 @@ export default function App() {
   const [seatsHeld, setSeatsHeld] = useState(false);
   const [holdSeconds, setHoldSeconds] = useState(HOLD_DURATION_SECONDS);
   const [draftDialogOpen, setDraftDialogOpen] = useState(false);
+  const [draftSavedNotice, setDraftSavedNotice] = useState(false);
   const [loadedDraft, setLoadedDraft] = useState(null);
   const [preferences, setPreferences] = useState({
     tickets: 2,
@@ -316,16 +318,21 @@ export default function App() {
     trackEvent("draft_loaded");
     setLoadedDraft({ ...savedDraft, loadedAt: Date.now() });
     setDraftDialogOpen(false);
+    setDraftSavedNotice(false);
   };
 
   const handleSaveDraft = (draft) => {
     trackEvent("draft_saved", {
       tickets: draft.tickets,
       maxPrice: draft.maxPrice,
+      sitTogether: draft.sitTogether,
+      view: draft.view,
+      excludeRestricted: draft.excludeRestricted,
     });
     setSavedDraft({ ...draft, savedAt: Date.now() });
     setPage("booking");
-    setDraftDialogOpen(true);
+    setDraftDialogOpen(false);
+    setDraftSavedNotice(true);
   };
 
   const handleOpenDraft = () => {
@@ -385,6 +392,15 @@ export default function App() {
         </Box>
       ) : (
         <>
+      {draftSavedNotice && (
+        <Box sx={{ maxWidth: 1440, mx: "auto", px: { xs: 2, md: 4 }, pt: 3 }}>
+          <Alert severity="success" onClose={() => setDraftSavedNotice(false)}>
+            Draft saved for later. In a real sale, this preparation would
+            typically happen hours before tickets become available. When sales
+            open, use <strong>Load saved draft</strong> to apply it.
+          </Alert>
+        </Box>
+      )}
       <Box
         sx={{
           maxWidth: 1440,
@@ -444,7 +460,7 @@ export default function App() {
               <Tooltip
                 arrow
                 placement="bottom"
-                title="Preview and load preferences saved before ticket sales open."
+                title="Load preferences saved earlier, typically hours before ticket sales open."
               >
                 <Button
                   variant="outlined"

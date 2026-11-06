@@ -61,7 +61,6 @@ export default function useEvaluationTracking() {
     const eventsOfType = (type) =>
       events.filter((event) => event.type === type);
     const lastEvent = events[events.length - 1];
-    const firstPath = eventOfType("selection_path_changed");
     const noMatchRecovery = eventOfType("no_match_recovery");
 
     return {
@@ -69,7 +68,7 @@ export default function useEvaluationTracking() {
       sessionId: session.sessionId,
       summary: {
         durationSeconds: lastEvent?.t ?? 0,
-        initialPath: firstPath?.details?.path ?? "guided",
+        initialPath: "guided",
         usedMapBrowsing: events.some(
           (event) =>
             event.type === "selection_path_changed" &&

@@ -71,8 +71,9 @@ export default function DraftSetupPage({ initialDraft, onBack, onSave }) {
       </Box>
 
       <Alert severity="info" sx={{ mb: 3 }}>
-        A draft saves preferences only. It does not reserve seats or complete a
-        purchase.
+        This preparation would typically be completed hours before ticket sales
+        open. A draft saves preferences only; saving it does not load the draft,
+        reserve seats, or complete a purchase.
       </Alert>
 
       <Box

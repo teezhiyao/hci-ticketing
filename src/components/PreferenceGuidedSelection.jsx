@@ -25,19 +25,27 @@ const venueSections = [
     label: "Available",
     name: "Stalls / Left",
     price: "$130-$160",
-    seatPrice: 150,
+    minPrice: 130,
+    seatPrice: 130,
+    view: "left",
+    matchPriority: 5,
     direction: "Left-side viewing direction",
     expectedViewLabel: "Left-side view from Stalls",
     explanation: "Browse directly on the venue map.",
     status: "Available",
     warning: false,
+    adjacentAvailability: "2 adjacent pairs available",
+    availabilityColor: "success",
   },
   {
     id: "circle-2-a",
     label: "Best match",
     name: "Circle 2 / Section A",
     price: "$120–$150",
-    seatPrice: 140,
+    minPrice: 120,
+    seatPrice: 120,
+    view: "center",
+    matchPriority: 10,
     direction: "Central viewing direction",
     expectedViewLabel: "Central view from Circle 2",
     explanation: "Matches your budget and preferred view.",
@@ -51,7 +59,10 @@ const venueSections = [
     label: "Lower price",
     name: "Circle 3 / Section B",
     price: "$90–$120",
-    seatPrice: 110,
+    minPrice: 90,
+    seatPrice: 90,
+    view: "center",
+    matchPriority: 0,
     direction: "Further from stage",
     expectedViewLabel: "Distant central view from Circle 3",
     explanation: "Costs less, but is further from the stage.",
@@ -65,9 +76,12 @@ const venueSections = [
     label: "Closest",
     name: "Stalls / Section C",
     price: "$150–$170",
-    seatPrice: 160,
-    direction: "Side viewing direction",
-    expectedViewLabel: "Closer side view from Stalls",
+    minPrice: 150,
+    seatPrice: 150,
+    view: "center",
+    matchPriority: 5,
+    direction: "Close central viewing direction",
+    expectedViewLabel: "Close central view from Stalls",
     explanation: "Closer to the stage, but may exceed your budget.",
     status: "Over budget",
     warning: true,
@@ -79,40 +93,131 @@ const venueSections = [
     label: "Available",
     name: "Stalls / Right",
     price: "$130-$160",
-    seatPrice: 150,
+    minPrice: 130,
+    seatPrice: 130,
+    view: "right",
+    matchPriority: 5,
     direction: "Right-side viewing direction",
     expectedViewLabel: "Right-side view from Stalls",
     explanation: "Browse directly on the venue map.",
     status: "Available",
     warning: false,
+    adjacentAvailability: "2 adjacent pairs available",
+    availabilityColor: "success",
   },
   {
     id: "circle-2-left",
     label: "Available",
     name: "Circle 2 / Left",
     price: "$110-$140",
-    seatPrice: 130,
+    minPrice: 110,
+    seatPrice: 110,
+    view: "left",
+    matchPriority: 10,
     direction: "Left-side viewing direction",
     expectedViewLabel: "Left-side view from Circle 2",
     explanation: "Browse directly on the venue map.",
     status: "Available",
     warning: false,
+    adjacentAvailability: "5 adjacent pairs available",
+    availabilityColor: "success",
   },
   {
     id: "circle-2-right",
     label: "Available",
     name: "Circle 2 / Right",
     price: "$110-$140",
-    seatPrice: 130,
+    minPrice: 110,
+    seatPrice: 110,
+    view: "right",
+    matchPriority: 10,
     direction: "Right-side viewing direction",
     expectedViewLabel: "Right-side view from Circle 2",
     explanation: "Browse directly on the venue map.",
     status: "Available",
     warning: false,
+    adjacentAvailability: "5 adjacent pairs available",
+    availabilityColor: "success",
   },
 ];
 
-const recommendedSectionIds = ["circle-2-a", "circle-3-b", "stalls-c"];
+const MIN_AVAILABLE_PRICE = Math.min(
+  ...venueSections.map((section) => section.minPrice),
+);
+
+const viewLabels = {
+  left: "left-side view",
+  center: "central view",
+  right: "right-side view",
+  any: "any viewing direction",
+};
+
+function buildRecommendedSections(preferences) {
+  const preferredView = preferences.view ?? "any";
+
+  return venueSections
+    .map((section) => {
+      const withinBudget = section.minPrice <= preferences.maxPrice;
+      const viewMatches =
+        preferredView === "any" || section.view === preferredView;
+      const viewScore = viewMatches
+        ? 60
+        : preferredView !== "center" && section.view === "center"
+          ? 20
+          : 0;
+      const overBudgetBy = Math.max(
+        0,
+        section.minPrice - preferences.maxPrice,
+      );
+      const score =
+        (withinBudget ? 100 : 0) +
+        viewScore +
+        section.matchPriority -
+        overBudgetBy * 2;
+
+      return { section, withinBudget, viewMatches, overBudgetBy, score };
+    })
+    .sort(
+      (first, second) =>
+        second.score - first.score ||
+        first.section.minPrice - second.section.minPrice,
+    )
+    .slice(0, 3)
+    .map(({ section, withinBudget, viewMatches, overBudgetBy }, index) => {
+      if (!withinBudget) {
+        return {
+          ...section,
+          label: index === 0 ? "Closest available" : "Alternative",
+          status: `Starts at $${section.minPrice}`,
+          explanation: viewMatches
+            ? `Matches your ${viewLabels[preferredView]} preference, but starts $${overBudgetBy} above your budget.`
+            : "Does not meet the current price or viewing preference.",
+          warning: true,
+        };
+      }
+
+      if (viewMatches) {
+        return {
+          ...section,
+          label: index === 0 ? "Best match" : "Also matches",
+          status: index === 0 ? "Recommended" : "Within requirements",
+          explanation:
+            preferredView === "any"
+              ? "Within budget; no viewing direction preference was applied."
+              : `Within budget and matches your ${viewLabels[preferredView]} preference.`,
+          warning: false,
+        };
+      }
+
+      return {
+        ...section,
+        label: index === 0 ? "Best available" : "View alternative",
+        status: "View differs",
+        explanation: `Within budget, but offers a ${viewLabels[section.view]} instead of your preferred ${viewLabels[preferredView]}.`,
+        warning: false,
+      };
+    });
+}
 
 function Preferences({ onApply, loadedDraft, onTrack }) {
   const [tickets, setTickets] = useState(2);
@@ -140,7 +245,7 @@ function Preferences({ onApply, loadedDraft, onTrack }) {
       excludeRestricted,
     };
     onTrack?.("preferences_applied", nextPreferences);
-    if (maxPrice < 90) {
+    if (maxPrice < MIN_AVAILABLE_PRICE) {
       onTrack?.("no_match_triggered", { maxPrice });
     }
     onApply(nextPreferences);
@@ -292,7 +397,12 @@ function SectionOption({ section, selected, onSelect }) {
   );
 }
 
-function VenueSectionMap({ selectedSection, onSelect, recommendationMode }) {
+function VenueSectionMap({
+  selectedSection,
+  onSelect,
+  recommendationMode,
+  recommendedSectionIds = [],
+}) {
   const mapSections = [
     {
       id: "stalls-left",
@@ -394,6 +504,10 @@ function VenueSectionMap({ selectedSection, onSelect, recommendationMode }) {
           {mapSections.map((section) => {
             const selected = selectedSection === section.id;
             const recommended = recommendedSectionIds.includes(section.id);
+            const recommendationIndex = recommendedSectionIds.indexOf(
+              section.id,
+            );
+            const recommendationColors = ["#e3f2fd", "#eef1f5", "#fff4e5"];
             return (
               <Button
                 key={section.id}
@@ -406,7 +520,7 @@ function VenueSectionMap({ selectedSection, onSelect, recommendationMode }) {
                   bgcolor: selected
                     ? "primary.main"
                     : recommendationMode && recommended
-                      ? section.background
+                      ? recommendationColors[recommendationIndex]
                       : "#f5f5f5",
                   color: selected ? "common.white" : "text.primary",
                   borderColor: selected ? "primary.main" : "grey.400",
@@ -430,9 +544,9 @@ function VenueSectionMap({ selectedSection, onSelect, recommendationMode }) {
             spacing={{ xs: 0.5, sm: 2 }}
             sx={{ mt: 1.5 }}
           >
-            <Typography variant="caption">Blue: best match</Typography>
-            <Typography variant="caption">Grey: lower price</Typography>
-            <Typography variant="caption">Orange: closest / over budget</Typography>
+            <Typography variant="caption">Blue: top match</Typography>
+            <Typography variant="caption">Grey: second match</Typography>
+            <Typography variant="caption">Orange: third match</Typography>
           </Stack>
         )}
       </Box>
@@ -448,14 +562,17 @@ function MatchingVenueSections({
   onTrack,
 }) {
   const [selectedSection, setSelectedSection] = useState("circle-2-a");
-  const selected = venueSections.find(
-    (section) => section.id === selectedSection,
+  const recommendedSections = buildRecommendedSections(preferences);
+  const recommendedSectionIds = recommendedSections.map(
+    (section) => section.id,
   );
-  const recommendedSections = venueSections.filter((section) =>
-    recommendedSectionIds.includes(section.id),
-  );
+  const selected =
+    (selectionMode === "guided" &&
+      recommendedSections.find((section) => section.id === selectedSection)) ||
+    venueSections.find((section) => section.id === selectedSection);
   const noExactMatch =
-    selectionMode === "guided" && preferences.maxPrice < 90;
+    selectionMode === "guided" &&
+    preferences.maxPrice < MIN_AVAILABLE_PRICE;
 
   const selectMapSection = (sectionId) => {
     setSelectedSection(sectionId);
@@ -468,13 +585,17 @@ function MatchingVenueSections({
   };
 
   useEffect(() => {
-    if (
-      selectionMode === "guided" &&
-      !recommendedSectionIds.includes(selectedSection)
-    ) {
-      setSelectedSection("circle-2-a");
+    if (selectionMode === "guided" && recommendedSections.length) {
+      setSelectedSection(recommendedSections[0].id);
     }
-  }, [selectionMode, selectedSection]);
+  }, [
+    selectionMode,
+    preferences.tickets,
+    preferences.maxPrice,
+    preferences.sitTogether,
+    preferences.view,
+    preferences.excludeRestricted,
+  ]);
 
   return (
     <Card variant="outlined">
@@ -519,13 +640,15 @@ function MatchingVenueSections({
           >
             No section can satisfy the ${preferences.maxPrice} maximum price
             together with the current requirements. Increase the budget to at
-            least $90, or inspect all sections on the venue map.
+            least ${MIN_AVAILABLE_PRICE}, or inspect all sections on the venue
+            map.
           </Alert>
         )}
         <VenueSectionMap
           selectedSection={selectedSection}
           onSelect={selectMapSection}
           recommendationMode={selectionMode === "guided"}
+          recommendedSectionIds={recommendedSectionIds}
         />
 
         {selectionMode === "guided" ? (
